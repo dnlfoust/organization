@@ -81,32 +81,54 @@ export default function App() {
   }
 
   async function handleAddNote(deckId) {
-    const position = (notesByDeck[deckId]?.length ?? 0);
-    const deck = decks.find((d) => d.id === deckId);
-    const note = await dataClient.createNote({ deckId, body: "", color: deck.color, position });
-    setNotes((prev) => [...prev, note]);
+    try {
+      const position = (notesByDeck[deckId]?.length ?? 0);
+      const deck = decks.find((d) => d.id === deckId);
+      const note = await dataClient.createNote({ deckId, body: "", color: deck.color, position });
+      setNotes((prev) => [...prev, note]);
+    } catch (err) {
+      alert(`Couldn't create note: ${err.message}`);
+    }
   }
 
   async function handleChangeNote(noteId, body) {
     setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, body } : n)));
-    await dataClient.updateNote(noteId, { body });
+    try {
+      await dataClient.updateNote(noteId, { body });
+    } catch (err) {
+      alert(`Couldn't save note: ${err.message}`);
+    }
   }
 
   async function handleDeleteNote(noteId) {
-    setNotes((prev) => prev.filter((n) => n.id !== noteId));
-    await dataClient.deleteNote(noteId);
+    try {
+      await dataClient.deleteNote(noteId);
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    } catch (err) {
+      alert(`Couldn't delete note: ${err.message}`);
+    }
   }
 
   async function handleAddDeck({ title, color }) {
-    const deck = await dataClient.createDeck({ title, color, position: decks.length });
-    setDecks((prev) => [...prev, deck]);
+    try {
+      const deck = await dataClient.createDeck({ title, color, position: decks.length });
+      const note = await dataClient.createNote({ deckId: deck.id, body: "", color, position: 0 });
+      setDecks((prev) => [...prev, deck]);
+      setNotes((prev) => [...prev, note]);
+    } catch (err) {
+      alert(`Couldn't create deck: ${err.message}`);
+    }
   }
 
   async function handleDeleteDeck(deckId) {
     if (!confirm("Delete this deck and all its notes?")) return;
-    setDecks((prev) => prev.filter((d) => d.id !== deckId));
-    setNotes((prev) => prev.filter((n) => n.deckId !== deckId));
-    await dataClient.deleteDeck(deckId);
+    try {
+      await dataClient.deleteDeck(deckId);
+      setDecks((prev) => prev.filter((d) => d.id !== deckId));
+      setNotes((prev) => prev.filter((n) => n.deckId !== deckId));
+    } catch (err) {
+      alert(`Couldn't delete deck: ${err.message}`);
+    }
   }
 
   if (user === undefined) {
