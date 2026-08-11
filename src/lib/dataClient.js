@@ -35,7 +35,7 @@ const demoClient = {
     return { unsubscribe() {} };
   },
 
-  async signInWithOtp() {
+  async signInWithPassword() {
     throw new Error("Demo mode has no real auth — connect Supabase to enable login.");
   },
 
@@ -102,8 +102,8 @@ const supabaseClient = {
     return data.subscription;
   },
 
-  async signInWithOtp(email) {
-    const { error } = await supabase.auth.signInWithOtp({ email });
+  async signInWithPassword(email, password) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   },
 

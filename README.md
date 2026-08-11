@@ -31,11 +31,14 @@ Runs in demo mode out of the box (no Supabase project needed to poke at the UI).
 To connect a real Supabase project instead:
 
 1. Copy `.env.example` to `.env.local` and fill in your project's URL and
-   anon key (Project Settings → API in the Supabase dashboard).
+   publishable key (Project Settings → Data API for the URL, Project
+   Settings → API Keys for the key).
 2. Run `supabase/schema.sql` in the Supabase SQL editor.
-3. In Supabase, enable **Email** auth (Authentication → Providers) with the
-   magic-link flow (no password).
-4. Restart `npm run dev`.
+3. There's no public sign-up form — this app expects you to create your one
+   account directly: Authentication → Users → **Add user** in the Supabase
+   dashboard. Set an email and password, and check **Auto Confirm User** so
+   it doesn't wait on an email confirmation link.
+4. Restart `npm run dev` and sign in with that email/password.
 
 ## Deployment
 
