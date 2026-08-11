@@ -1,6 +1,6 @@
 # organization
 
-Personal organizer web app — sticky-note stacks by topic (Work, Personal
+Personal organizer web app — sticky-note decks by topic (Work, Personal
 Project, House Project, ...), backed by Supabase. Hosted at
 [organization.danielfoust.com](https://organization.danielfoust.com).
 
@@ -16,7 +16,7 @@ auth + Postgres storage.
 - `src/lib/dataClient.js` is the data-access layer both modes implement —
   everything else in the app (`App.jsx`, components) is written against that
   interface and doesn't know which backend it's talking to.
-- `supabase/schema.sql` creates the `stacks` and `notes` tables with Row
+- `supabase/schema.sql` creates the `decks` and `notes` tables with Row
   Level Security so each authenticated user only ever sees their own rows.
 
 ## Local development

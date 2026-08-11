@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { dataClient } from "./lib/dataClient";
 import Login from "./components/Login";
-import StackColumn from "./components/StackColumn";
-import AddStackForm from "./components/AddStackForm";
+import DeckColumn from "./components/DeckColumn";
+import AddDeckForm from "./components/AddDeckForm";
 import "./App.css";
 
 export default function App() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = signed out
-  const [stacks, setStacks] = useState([]);
+  const [decks, setDecks] = useState([]);
   const [notes, setNotes] = useState([]);
 
   useEffect(() => {
@@ -19,25 +19,25 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([dataClient.listStacks(), dataClient.listNotes()]).then(([s, n]) => {
-      setStacks(s);
+    Promise.all([dataClient.listDecks(), dataClient.listNotes()]).then(([d, n]) => {
+      setDecks(d);
       setNotes(n);
     });
   }, [user]);
 
-  const notesByStack = useMemo(() => {
+  const notesByDeck = useMemo(() => {
     const map = {};
-    for (const stack of stacks) {
-      map[stack.id] = notes.filter((n) => n.stackId === stack.id).sort((a, b) => a.position - b.position);
+    for (const deck of decks) {
+      map[deck.id] = notes.filter((n) => n.deckId === deck.id).sort((a, b) => a.position - b.position);
     }
     return map;
-  }, [stacks, notes]);
+  }, [decks, notes]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   function findContainer(id) {
-    if (stacks.some((s) => s.id === id)) return id;
-    return notes.find((n) => n.id === id)?.stackId ?? null;
+    if (decks.some((d) => d.id === id)) return id;
+    return notes.find((n) => n.id === id)?.deckId ?? null;
   }
 
   function handleDragEnd(event) {
@@ -54,17 +54,17 @@ export default function App() {
     const movedNote = notes.find((n) => n.id === activeId);
     const withoutActive = notes.filter((n) => n.id !== activeId);
 
-    const overItems = withoutActive.filter((n) => n.stackId === overContainer).sort((a, b) => a.position - b.position);
+    const overItems = withoutActive.filter((n) => n.deckId === overContainer).sort((a, b) => a.position - b.position);
     const overIndex = overId === overContainer ? overItems.length : overItems.findIndex((n) => n.id === overId);
     const insertAt = overIndex === -1 ? overItems.length : overIndex;
-    overItems.splice(insertAt, 0, { ...movedNote, stackId: overContainer });
+    overItems.splice(insertAt, 0, { ...movedNote, deckId: overContainer });
 
     const reindexedOver = overItems.map((n, idx) => ({ ...n, position: idx }));
     const reindexedSource =
       activeContainer === overContainer
         ? []
         : withoutActive
-            .filter((n) => n.stackId === activeContainer)
+            .filter((n) => n.deckId === activeContainer)
             .sort((a, b) => a.position - b.position)
             .map((n, idx) => ({ ...n, position: idx }));
 
@@ -75,15 +75,15 @@ export default function App() {
 
     Promise.all(
       [...reindexedOver, ...reindexedSource].map((n) =>
-        dataClient.updateNote(n.id, { stackId: n.stackId, position: n.position }).catch(console.error)
+        dataClient.updateNote(n.id, { deckId: n.deckId, position: n.position }).catch(console.error)
       )
     );
   }
 
-  async function handleAddNote(stackId) {
-    const position = (notesByStack[stackId]?.length ?? 0);
-    const stack = stacks.find((s) => s.id === stackId);
-    const note = await dataClient.createNote({ stackId, body: "", color: stack.color, position });
+  async function handleAddNote(deckId) {
+    const position = (notesByDeck[deckId]?.length ?? 0);
+    const deck = decks.find((d) => d.id === deckId);
+    const note = await dataClient.createNote({ deckId, body: "", color: deck.color, position });
     setNotes((prev) => [...prev, note]);
   }
 
@@ -97,16 +97,16 @@ export default function App() {
     await dataClient.deleteNote(noteId);
   }
 
-  async function handleAddStack({ title, color }) {
-    const stack = await dataClient.createStack({ title, color, position: stacks.length });
-    setStacks((prev) => [...prev, stack]);
+  async function handleAddDeck({ title, color }) {
+    const deck = await dataClient.createDeck({ title, color, position: decks.length });
+    setDecks((prev) => [...prev, deck]);
   }
 
-  async function handleDeleteStack(stackId) {
-    if (!confirm("Delete this stack and all its notes?")) return;
-    setStacks((prev) => prev.filter((s) => s.id !== stackId));
-    setNotes((prev) => prev.filter((n) => n.stackId !== stackId));
-    await dataClient.deleteStack(stackId);
+  async function handleDeleteDeck(deckId) {
+    if (!confirm("Delete this deck and all its notes?")) return;
+    setDecks((prev) => prev.filter((d) => d.id !== deckId));
+    setNotes((prev) => prev.filter((n) => n.deckId !== deckId));
+    await dataClient.deleteDeck(deckId);
   }
 
   if (user === undefined) {
@@ -138,18 +138,18 @@ export default function App() {
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <div className="board">
-          {stacks.map((stack) => (
-            <StackColumn
-              key={stack.id}
-              stack={stack}
-              notes={notesByStack[stack.id] ?? []}
+          {decks.map((deck) => (
+            <DeckColumn
+              key={deck.id}
+              deck={deck}
+              notes={notesByDeck[deck.id] ?? []}
               onAddNote={handleAddNote}
               onChangeNote={handleChangeNote}
               onDeleteNote={handleDeleteNote}
-              onDeleteStack={handleDeleteStack}
+              onDeleteDeck={handleDeleteDeck}
             />
           ))}
-          <AddStackForm onAdd={handleAddStack} />
+          <AddDeckForm onAdd={handleAddDeck} />
         </div>
       </DndContext>
     </div>

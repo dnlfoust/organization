@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from "../supabaseClient";
-import { initialStacks, initialNotes } from "../demoData";
+import { initialDecks, initialNotes } from "../demoData";
 
 // Thin data-access layer so <App> doesn't care whether it's talking to
 // Supabase or to the local demo store. Both implementations expose the
@@ -14,7 +14,7 @@ function loadDemoState() {
   } catch {
     // ignore corrupt local storage, fall through to seed data
   }
-  return { stacks: initialStacks, notes: initialNotes };
+  return { decks: initialDecks, notes: initialNotes };
 }
 
 function saveDemoState(state) {
@@ -41,32 +41,32 @@ const demoClient = {
 
   async signOut() {},
 
-  async listStacks() {
-    return loadDemoState().stacks.slice().sort((a, b) => a.position - b.position);
+  async listDecks() {
+    return loadDemoState().decks.slice().sort((a, b) => a.position - b.position);
   },
 
   async listNotes() {
     return loadDemoState().notes.slice().sort((a, b) => a.position - b.position);
   },
 
-  async createStack({ title, color }) {
+  async createDeck({ title, color }) {
     const state = loadDemoState();
-    const stack = { id: uid(), title, color, position: state.stacks.length };
-    state.stacks.push(stack);
+    const deck = { id: uid(), title, color, position: state.decks.length };
+    state.decks.push(deck);
     saveDemoState(state);
-    return stack;
+    return deck;
   },
 
-  async deleteStack(stackId) {
+  async deleteDeck(deckId) {
     const state = loadDemoState();
-    state.stacks = state.stacks.filter((s) => s.id !== stackId);
-    state.notes = state.notes.filter((n) => n.stackId !== stackId);
+    state.decks = state.decks.filter((d) => d.id !== deckId);
+    state.notes = state.notes.filter((n) => n.deckId !== deckId);
     saveDemoState(state);
   },
 
-  async createNote({ stackId, body, color, position }) {
+  async createNote({ deckId, body, color, position }) {
     const state = loadDemoState();
-    const note = { id: uid(), stackId, body, color, position };
+    const note = { id: uid(), deckId, body, color, position };
     state.notes.push(note);
     saveDemoState(state);
     return note;
@@ -84,8 +84,8 @@ const demoClient = {
     saveDemoState(state);
   },
 
-  async moveNote(noteId, stackId, position) {
-    return this.updateNote(noteId, { stackId, position });
+  async moveNote(noteId, deckId, position) {
+    return this.updateNote(noteId, { deckId, position });
   },
 };
 
@@ -111,10 +111,10 @@ const supabaseClient = {
     await supabase.auth.signOut();
   },
 
-  async listStacks() {
-    const { data, error } = await supabase.from("stacks").select("*").order("position");
+  async listDecks() {
+    const { data, error } = await supabase.from("decks").select("*").order("position");
     if (error) throw error;
-    return data.map((s) => ({ id: s.id, title: s.title, color: s.color, position: s.position }));
+    return data.map((d) => ({ id: d.id, title: d.title, color: d.color, position: d.position }));
   },
 
   async listNotes() {
@@ -122,17 +122,17 @@ const supabaseClient = {
     if (error) throw error;
     return data.map((n) => ({
       id: n.id,
-      stackId: n.stack_id,
+      deckId: n.deck_id,
       body: n.body,
       color: n.color,
       position: n.position,
     }));
   },
 
-  async createStack({ title, color, position }) {
+  async createDeck({ title, color, position }) {
     const { data: sessionData } = await supabase.auth.getSession();
     const { data, error } = await supabase
-      .from("stacks")
+      .from("decks")
       .insert({ title, color, position, user_id: sessionData.session.user.id })
       .select()
       .single();
@@ -140,17 +140,17 @@ const supabaseClient = {
     return { id: data.id, title: data.title, color: data.color, position: data.position };
   },
 
-  async deleteStack(stackId) {
-    const { error } = await supabase.from("stacks").delete().eq("id", stackId);
+  async deleteDeck(deckId) {
+    const { error } = await supabase.from("decks").delete().eq("id", deckId);
     if (error) throw error;
   },
 
-  async createNote({ stackId, body, color, position }) {
+  async createNote({ deckId, body, color, position }) {
     const { data: sessionData } = await supabase.auth.getSession();
     const { data, error } = await supabase
       .from("notes")
       .insert({
-        stack_id: stackId,
+        deck_id: deckId,
         body,
         color,
         position,
@@ -159,7 +159,7 @@ const supabaseClient = {
       .select()
       .single();
     if (error) throw error;
-    return { id: data.id, stackId: data.stack_id, body: data.body, color: data.color, position: data.position };
+    return { id: data.id, deckId: data.deck_id, body: data.body, color: data.color, position: data.position };
   },
 
   async updateNote(noteId, changes) {
@@ -167,7 +167,7 @@ const supabaseClient = {
     if (changes.body !== undefined) patch.body = changes.body;
     if (changes.color !== undefined) patch.color = changes.color;
     if (changes.position !== undefined) patch.position = changes.position;
-    if (changes.stackId !== undefined) patch.stack_id = changes.stackId;
+    if (changes.deckId !== undefined) patch.deck_id = changes.deckId;
     const { error } = await supabase.from("notes").update(patch).eq("id", noteId);
     if (error) throw error;
   },
@@ -177,8 +177,8 @@ const supabaseClient = {
     if (error) throw error;
   },
 
-  async moveNote(noteId, stackId, position) {
-    return this.updateNote(noteId, { stackId, position });
+  async moveNote(noteId, deckId, position) {
+    return this.updateNote(noteId, { deckId, position });
   },
 };
 

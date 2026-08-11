@@ -2,24 +2,24 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import StickyNote from "./StickyNote";
 
-export default function StackColumn({ stack, notes, onAddNote, onChangeNote, onDeleteNote, onDeleteStack }) {
-  const { setNodeRef } = useDroppable({ id: stack.id });
+export default function DeckColumn({ deck, notes, onAddNote, onChangeNote, onDeleteNote, onDeleteDeck }) {
+  const { setNodeRef } = useDroppable({ id: deck.id });
   const noteIds = notes.map((n) => n.id);
 
   return (
-    <div className="stack-column">
-      <div className="stack-column-header">
+    <div className="deck-column">
+      <div className="deck-column-header">
         <h2>
-          <span className="stack-color-dot" style={{ background: stack.color }} />
-          {stack.title}
-          <span className="stack-note-count">{notes.length}</span>
+          <span className="deck-color-dot" style={{ background: deck.color }} />
+          {deck.title}
+          <span className="deck-note-count">{notes.length}</span>
         </h2>
-        <button className="stack-delete-btn" onClick={() => onDeleteStack(stack.id)} title="Delete stack">
+        <button className="deck-delete-btn" onClick={() => onDeleteDeck(deck.id)} title="Delete deck">
           ✕
         </button>
       </div>
 
-      <div ref={setNodeRef} className="stack-notes">
+      <div ref={setNodeRef} className="deck-notes">
         <SortableContext items={noteIds} strategy={verticalListSortingStrategy}>
           {notes.map((note) => (
             <StickyNote
@@ -32,7 +32,7 @@ export default function StackColumn({ stack, notes, onAddNote, onChangeNote, onD
         </SortableContext>
       </div>
 
-      <button className="stack-add-note" onClick={() => onAddNote(stack.id)}>
+      <button className="deck-add-note" onClick={() => onAddNote(deck.id)}>
         + Add note
       </button>
     </div>

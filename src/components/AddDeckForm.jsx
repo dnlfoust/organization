@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const COLORS = ["#fde68a", "#bfdbfe", "#bbf7d0", "#fbcfe8", "#fed7aa", "#ddd6fe"];
 
-export default function AddStackForm({ onAdd }) {
+export default function AddDeckForm({ onAdd }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [color, setColor] = useState(COLORS[0]);
@@ -18,21 +18,21 @@ export default function AddStackForm({ onAdd }) {
 
   if (!open) {
     return (
-      <div className="add-stack-column">
-        <button className="add-stack-trigger" onClick={() => setOpen(true)}>
-          + Add stack
+      <div className="add-deck-column">
+        <button className="add-deck-trigger" onClick={() => setOpen(true)}>
+          + Add deck
         </button>
       </div>
     );
   }
 
   return (
-    <div className="add-stack-column">
-      <form className="add-stack-form" onSubmit={submit}>
+    <div className="add-deck-column">
+      <form className="add-deck-form" onSubmit={submit}>
         <input
           type="text"
           autoFocus
-          placeholder="Stack name"
+          placeholder="Deck name"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
@@ -49,7 +49,7 @@ export default function AddStackForm({ onAdd }) {
           ))}
         </div>
         <button type="submit" className="btn btn-primary">
-          Add stack
+          Add deck
         </button>
       </form>
     </div>

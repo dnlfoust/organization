@@ -130,7 +130,7 @@
   min-height: calc(100vh - 65px);
 }
 
-.stack-column {
+.deck-column {
   flex: 0 0 260px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -141,14 +141,14 @@
   max-height: calc(100vh - 100px);
 }
 
-.stack-column-header {
+.deck-column-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.85rem 1rem 0.5rem;
 }
 
-.stack-column-header h2 {
+.deck-column-header h2 {
   font-size: 0.95rem;
   margin: 0;
   display: flex;
@@ -156,20 +156,20 @@
   gap: 0.5rem;
 }
 
-.stack-color-dot {
+.deck-color-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   display: inline-block;
 }
 
-.stack-note-count {
+.deck-note-count {
   color: var(--color-text-muted);
   font-weight: 400;
   font-size: 0.85rem;
 }
 
-.stack-delete-btn {
+.deck-delete-btn {
   background: none;
   border: none;
   color: var(--color-text-muted);
@@ -178,11 +178,11 @@
   padding: 0.2rem 0.4rem;
 }
 
-.stack-delete-btn:hover {
+.deck-delete-btn:hover {
   color: #b42318;
 }
 
-.stack-notes {
+.deck-notes {
   flex: 1;
   overflow-y: auto;
   padding: 0.25rem 0.75rem 0.75rem;
@@ -192,7 +192,7 @@
   min-height: 60px;
 }
 
-.stack-add-note {
+.deck-add-note {
   border: none;
   background: none;
   text-align: left;
@@ -202,22 +202,22 @@
   cursor: pointer;
 }
 
-.stack-add-note:hover {
+.deck-add-note:hover {
   color: var(--color-accent);
 }
 
-.add-stack-column {
+.add-deck-column {
   flex: 0 0 220px;
 }
 
-.add-stack-form {
+.add-deck-form {
   background: var(--color-surface);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius);
   padding: 0.85rem;
 }
 
-.add-stack-form input[type="text"] {
+.add-deck-form input[type="text"] {
   width: 100%;
   padding: 0.5rem 0.6rem;
   border-radius: var(--radius);
@@ -246,7 +246,7 @@
   border-color: var(--color-text);
 }
 
-.add-stack-trigger {
+.add-deck-trigger {
   width: 100%;
   border: 1px dashed var(--color-border);
   background: none;
@@ -257,7 +257,7 @@
   cursor: pointer;
 }
 
-.add-stack-trigger:hover {
+.add-deck-trigger:hover {
   color: var(--color-accent);
   border-color: var(--color-accent);
 }
