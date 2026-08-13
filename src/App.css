@@ -144,8 +144,22 @@
 .deck-column-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.35rem;
   padding: 0.85rem 1rem 0.5rem;
+}
+
+.deck-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 0.2rem;
+  flex-shrink: 0;
+}
+
+.deck-toggle-btn:hover {
+  color: var(--color-accent);
 }
 
 .deck-column-header h2 {
@@ -154,6 +168,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
 }
 
 .deck-color-dot {
@@ -204,6 +221,49 @@
 
 .deck-add-note:hover {
   color: var(--color-accent);
+}
+
+/* ---------- Collapsed deck card-stack ---------- */
+
+.deck-stack {
+  position: relative;
+  margin: 0.5rem 1rem 1.5rem;
+  cursor: pointer;
+  min-height: 80px;
+}
+
+.deck-stack-layer {
+  position: absolute;
+  inset: 0;
+  background: var(--note-color, #fde68a);
+  border-radius: 4px;
+  box-shadow: var(--shadow-note);
+  transform: rotate(calc(var(--layer, 1) * -3deg)) translate(calc(var(--layer, 1) * -4px), calc(var(--layer, 1) * 5px));
+  opacity: calc(1 - var(--layer, 1) * 0.12);
+}
+
+.deck-stack-top {
+  position: relative;
+  background: var(--note-color, #fde68a);
+  border-radius: 4px;
+  box-shadow: var(--shadow-note);
+  padding: 0.75rem;
+  min-height: 80px;
+  color: #1c2128;
+  font-size: 0.85rem;
+}
+
+.deck-stack-top p {
+  margin: 0;
+}
+
+.deck-stack-empty {
+  color: rgba(28, 33, 40, 0.55);
+  font-style: italic;
+}
+
+.deck-stack:hover .deck-stack-top {
+  filter: brightness(0.97);
 }
 
 .add-deck-column {

@@ -10,6 +10,19 @@ export default function App() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = signed out
   const [decks, setDecks] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [expandedDeckIds, setExpandedDeckIds] = useState(new Set());
+
+  function toggleDeckExpanded(deckId) {
+    setExpandedDeckIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(deckId)) {
+        next.delete(deckId);
+      } else {
+        next.add(deckId);
+      }
+      return next;
+    });
+  }
 
   useEffect(() => {
     dataClient.getSession().then((session) => setUser(session?.user ?? null));
@@ -115,6 +128,7 @@ export default function App() {
       const note = await dataClient.createNote({ deckId: deck.id, body: "", color, position: 0 });
       setDecks((prev) => [...prev, deck]);
       setNotes((prev) => [...prev, note]);
+      setExpandedDeckIds((prev) => new Set(prev).add(deck.id));
     } catch (err) {
       alert(`Couldn't create deck: ${err.message}`);
     }
@@ -165,6 +179,8 @@ export default function App() {
               key={deck.id}
               deck={deck}
               notes={notesByDeck[deck.id] ?? []}
+              expanded={expandedDeckIds.has(deck.id)}
+              onToggleExpand={() => toggleDeckExpanded(deck.id)}
               onAddNote={handleAddNote}
               onChangeNote={handleChangeNote}
               onDeleteNote={handleDeleteNote}
