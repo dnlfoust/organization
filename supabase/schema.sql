@@ -25,11 +25,16 @@ create table if not exists notes (
   user_id uuid not null references auth.users(id) on delete cascade,
   deck_id uuid not null references decks(id) on delete cascade,
   body text not null default '',
+  details text not null default '',
   color text not null default '#fef08a',
   position integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Safe to re-run: adds `details` (the back-of-card notes) to a notes table
+-- that was created before this column existed. No-op on a fresh install.
+alter table notes add column if not exists details text not null default '';
 
 create index if not exists notes_deck_id_idx on notes(deck_id);
 create index if not exists decks_user_id_idx on decks(user_id);

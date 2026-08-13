@@ -1,12 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import StickyNote from "./StickyNote";
-
-function previewText(html) {
-  const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  if (!text) return "";
-  return text.length > 80 ? `${text.slice(0, 80)}…` : text;
-}
+import { previewText } from "../lib/text";
 
 export default function DeckColumn({
   deck,
@@ -15,6 +10,7 @@ export default function DeckColumn({
   onToggleExpand,
   onAddNote,
   onChangeNote,
+  onChangeDetails,
   onDeleteNote,
   onDeleteDeck,
 }) {
@@ -49,6 +45,7 @@ export default function DeckColumn({
                   key={note.id}
                   note={note}
                   onChange={(body) => onChangeNote(note.id, body)}
+                  onChangeDetails={(details) => onChangeDetails(note.id, details)}
                   onDelete={onDeleteNote}
                 />
               ))}

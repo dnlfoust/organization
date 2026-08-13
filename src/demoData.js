@@ -9,9 +9,16 @@ export const initialDecks = [
 ];
 
 export const initialNotes = [
-  { id: "note-1", deckId: "deck-1", body: "Finish Q3 portfolio review", color: "#fde68a", position: 0 },
-  { id: "note-2", deckId: "deck-1", body: "Reply to compliance email", color: "#fde68a", position: 1 },
-  { id: "note-3", deckId: "deck-2", body: "Wire up Supabase auth", color: "#bfdbfe", position: 0 },
-  { id: "note-4", deckId: "deck-2", body: "Pick a color palette", color: "#bfdbfe", position: 1 },
-  { id: "note-5", deckId: "deck-3", body: "Call plumber about upstairs sink", color: "#bbf7d0", position: 0 },
+  { id: "note-1", deckId: "deck-1", body: "Finish Q3 portfolio review", details: "", color: "#fde68a", position: 0 },
+  { id: "note-2", deckId: "deck-1", body: "Reply to compliance email", details: "", color: "#fde68a", position: 1 },
+  { id: "note-3", deckId: "deck-2", body: "Wire up Supabase auth", details: "", color: "#bfdbfe", position: 0 },
+  { id: "note-4", deckId: "deck-2", body: "Pick a color palette", details: "", color: "#bfdbfe", position: 1 },
+  {
+    id: "note-5",
+    deckId: "deck-3",
+    body: "Call plumber about upstairs sink",
+    details: "<p>Ask about the quote for re-piping while they're out.</p>",
+    color: "#bbf7d0",
+    position: 0,
+  },
 ];

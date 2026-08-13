@@ -23,6 +23,12 @@ Postgres storage.
   text, which is what makes bold/italic/underline/strikethrough, bulleted
   lists, and checklists possible. No schema change was needed for this —
   `notes.body` was already a plain `text` column.
+- Each note also has a `details` column (same HTML-via-Tiptap approach) for
+  the back of the card. Clicking the → arrow on a note flips it over; the
+  back shows the front's text as a read-only title and a separate editor
+  for extended notes. If you ran `schema.sql` before this existed, just
+  re-run it — the `alter table ... add column if not exists` line makes it
+  safe to run again against an existing database.
 
 ## Local development
 

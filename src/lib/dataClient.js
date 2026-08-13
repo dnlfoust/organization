@@ -64,9 +64,9 @@ const demoClient = {
     saveDemoState(state);
   },
 
-  async createNote({ deckId, body, color, position }) {
+  async createNote({ deckId, body, color, position, details = "" }) {
     const state = loadDemoState();
-    const note = { id: uid(), deckId, body, color, position };
+    const note = { id: uid(), deckId, body, color, position, details };
     state.notes.push(note);
     saveDemoState(state);
     return note;
@@ -124,6 +124,7 @@ const supabaseClient = {
       id: n.id,
       deckId: n.deck_id,
       body: n.body,
+      details: n.details,
       color: n.color,
       position: n.position,
     }));
@@ -145,13 +146,14 @@ const supabaseClient = {
     if (error) throw error;
   },
 
-  async createNote({ deckId, body, color, position }) {
+  async createNote({ deckId, body, color, position, details = "" }) {
     const { data: sessionData } = await supabase.auth.getSession();
     const { data, error } = await supabase
       .from("notes")
       .insert({
         deck_id: deckId,
         body,
+        details,
         color,
         position,
         user_id: sessionData.session.user.id,
@@ -159,12 +161,20 @@ const supabaseClient = {
       .select()
       .single();
     if (error) throw error;
-    return { id: data.id, deckId: data.deck_id, body: data.body, color: data.color, position: data.position };
+    return {
+      id: data.id,
+      deckId: data.deck_id,
+      body: data.body,
+      details: data.details,
+      color: data.color,
+      position: data.position,
+    };
   },
 
   async updateNote(noteId, changes) {
     const patch = {};
     if (changes.body !== undefined) patch.body = changes.body;
+    if (changes.details !== undefined) patch.details = changes.details;
     if (changes.color !== undefined) patch.color = changes.color;
     if (changes.position !== undefined) patch.position = changes.position;
     if (changes.deckId !== undefined) patch.deck_id = changes.deckId;

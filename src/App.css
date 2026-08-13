@@ -328,15 +328,13 @@
 .sticky-note {
   background: var(--note-color, #fde68a);
   border-radius: 10px;
-  padding: 0.75rem 0.75rem 0.5rem;
   box-shadow: var(--shadow-note);
   color: #1c2128;
   cursor: grab;
   position: relative;
   aspect-ratio: 5 / 7;
   min-height: 70px;
-  display: flex;
-  flex-direction: column;
+  perspective: 1200px;
 }
 
 .sticky-note.dragging {
@@ -347,6 +345,7 @@
   position: absolute;
   top: 0.35rem;
   right: 0.5rem;
+  z-index: 2;
   cursor: grab;
   color: rgba(28, 33, 40, 0.4);
   font-size: 0.8rem;
@@ -356,6 +355,72 @@
 
 .sticky-note-handle:active {
   cursor: grabbing;
+}
+
+/* ---------- Card flip (front = note, back = details) ---------- */
+
+.note-flip-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.5s;
+}
+
+.note-flip-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.note-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 0.75rem 0.5rem;
+  border-radius: 10px;
+  background: var(--note-color, #fde68a);
+  overflow: hidden;
+}
+
+.note-face-back {
+  transform: rotateY(180deg);
+}
+
+.note-flip-btn {
+  border: none;
+  background: rgba(28, 33, 40, 0.08);
+  color: rgba(28, 33, 40, 0.75);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.25rem 0.45rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.note-flip-btn:hover {
+  background: rgba(28, 33, 40, 0.16);
+}
+
+.note-toolbar .note-flip-btn {
+  margin-left: auto;
+}
+
+.note-back-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.note-back-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .note-toolbar {
