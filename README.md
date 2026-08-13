@@ -4,8 +4,9 @@ Personal organizer web app — sticky-note decks by topic (Work, Personal
 Project, House Project, ...), backed by Supabase. Hosted at
 [organization.danielfoust.com](https://organization.danielfoust.com).
 
-React + Vite, [@dnd-kit](https://dndkit.com/) for drag-and-drop, Supabase for
-auth + Postgres storage.
+React + Vite, [@dnd-kit](https://dndkit.com/) for drag-and-drop,
+[Tiptap](https://tiptap.dev/) for rich-text notes, Supabase for auth +
+Postgres storage.
 
 ## How it works
 
@@ -18,6 +19,10 @@ auth + Postgres storage.
   interface and doesn't know which backend it's talking to.
 - `supabase/schema.sql` creates the `decks` and `notes` tables with Row
   Level Security so each authenticated user only ever sees their own rows.
+- Each note's `body` is stored as HTML (Tiptap's output) rather than plain
+  text, which is what makes bold/italic/underline/strikethrough, bulleted
+  lists, and checklists possible. No schema change was needed for this —
+  `notes.body` was already a plain `text` column.
 
 ## Local development
 

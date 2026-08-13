@@ -296,21 +296,101 @@
   cursor: grabbing;
 }
 
-.sticky-note textarea {
+.note-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  padding-right: 1.1rem;
+  margin-bottom: 0.35rem;
+}
+
+.note-toolbar-btn {
   border: none;
-  background: transparent;
-  resize: none;
-  font-family: inherit;
-  font-size: 0.9rem;
-  color: inherit;
-  width: 100%;
+  background: rgba(28, 33, 40, 0.08);
+  color: rgba(28, 33, 40, 0.75);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.25rem 0.4rem;
+  cursor: pointer;
+}
+
+.note-toolbar-btn:hover {
+  background: rgba(28, 33, 40, 0.16);
+}
+
+.note-toolbar-btn.active {
+  background: rgba(28, 33, 40, 0.32);
+  color: #1c2128;
+}
+
+.note-toolbar-bold {
+  font-weight: 800;
+}
+
+.note-toolbar-italic {
+  font-style: italic;
+}
+
+.note-toolbar-underline {
+  text-decoration: underline;
+}
+
+.note-toolbar-strike {
+  text-decoration: line-through;
+}
+
+.note-editor {
   flex: 1;
   min-height: 50px;
+  font-size: 0.9rem;
+  color: inherit;
+  cursor: text;
+}
+
+.note-editor .tiptap {
+  outline: none;
+  min-height: 50px;
+}
+
+.note-editor .tiptap p {
+  margin: 0 0 0.4em;
+}
+
+.note-editor .tiptap p:last-child {
+  margin-bottom: 0;
+}
+
+.note-editor .tiptap ul:not([data-type="taskList"]) {
+  margin: 0 0 0.4em;
+  padding-left: 1.1em;
+}
+
+.note-editor .tiptap ul[data-type="taskList"] {
+  list-style: none;
+  margin: 0 0 0.4em;
   padding: 0;
 }
 
-.sticky-note textarea:focus {
-  outline: none;
+.note-editor .tiptap ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4em;
+}
+
+.note-editor .tiptap ul[data-type="taskList"] li > label {
+  margin-top: 0.2em;
+  user-select: none;
+}
+
+.note-editor .tiptap ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+.note-editor .tiptap ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  opacity: 0.6;
 }
 
 .sticky-note-footer {
