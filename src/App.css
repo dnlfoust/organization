@@ -236,7 +236,7 @@
   position: absolute;
   inset: 0;
   background: var(--note-color, #fde68a);
-  border-radius: 4px;
+  border-radius: 10px;
   box-shadow: var(--shadow-note);
   transform: rotate(calc(var(--layer, 1) * -3deg)) translate(calc(var(--layer, 1) * -4px), calc(var(--layer, 1) * 5px));
   opacity: calc(1 - var(--layer, 1) * 0.12);
@@ -245,9 +245,10 @@
 .deck-stack-top {
   position: relative;
   background: var(--note-color, #fde68a);
-  border-radius: 4px;
+  border-radius: 10px;
   box-shadow: var(--shadow-note);
   padding: 0.75rem;
+  aspect-ratio: 5 / 7;
   min-height: 80px;
   color: #1c2128;
   font-size: 0.85rem;
@@ -326,12 +327,13 @@
 
 .sticky-note {
   background: var(--note-color, #fde68a);
-  border-radius: 4px;
+  border-radius: 10px;
   padding: 0.75rem 0.75rem 0.5rem;
   box-shadow: var(--shadow-note);
   color: #1c2128;
   cursor: grab;
   position: relative;
+  aspect-ratio: 5 / 7;
   min-height: 70px;
   display: flex;
   flex-direction: column;
