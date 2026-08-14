@@ -43,11 +43,15 @@ create index if not exists notes_user_id_idx on notes(user_id);
 alter table decks enable row level security;
 alter table notes enable row level security;
 
+-- create policy has no "if not exists", so drop-then-recreate to keep this
+-- script safe to re-run.
+drop policy if exists "Users manage their own decks" on decks;
 create policy "Users manage their own decks"
   on decks for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users manage their own notes" on notes;
 create policy "Users manage their own notes"
   on notes for all
   using (auth.uid() = user_id)
@@ -62,6 +66,8 @@ begin
 end;
 $$ language plpgsql;
 
+-- create trigger also has no "if not exists" — same drop-then-recreate.
+drop trigger if exists notes_set_updated_at on notes;
 create trigger notes_set_updated_at
   before update on notes
   for each row
