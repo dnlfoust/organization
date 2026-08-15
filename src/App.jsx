@@ -105,10 +105,10 @@ export default function App() {
     }
   }
 
-  async function handleChangeItems(noteId, items) {
-    setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, items } : n)));
+  async function handleChangeNote(noteId, patch) {
+    setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, ...patch } : n)));
     try {
-      await dataClient.updateNote(noteId, { items });
+      await dataClient.updateNote(noteId, patch);
     } catch (err) {
       alert(`Couldn't save note: ${err.message}`);
     }
@@ -184,7 +184,7 @@ export default function App() {
               expanded={expandedDeckIds.has(deck.id)}
               onToggleExpand={() => toggleDeckExpanded(deck.id)}
               onAddNote={handleAddNote}
-              onChangeItems={handleChangeItems}
+              onChangeNote={handleChangeNote}
               onDeleteNote={handleDeleteNote}
               onDeleteDeck={handleDeleteDeck}
             />

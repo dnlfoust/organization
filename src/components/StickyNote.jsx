@@ -112,11 +112,12 @@ function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onF
   );
 }
 
-export default function StickyNote({ note, onChangeItems, onDelete }) {
+export default function StickyNote({ note, onChangeNote, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: note.id,
   });
 
+  const [title, setTitle] = useState(note.title ?? "");
   const [items, setItems] = useState(note.items ?? []);
   const [flippedItemId, setFlippedItemId] = useState(null);
   const [autoFocusId, setAutoFocusId] = useState(null);
@@ -126,47 +127,69 @@ export default function StickyNote({ note, onChangeItems, onDelete }) {
     itemsRef.current = items;
   }, [items]);
 
+  const titleRef = useRef(title);
+  useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
+
   const flippedItemIdRef = useRef(flippedItemId);
   useEffect(() => {
     flippedItemIdRef.current = flippedItemId;
   }, [flippedItemId]);
 
-  const saveTimer = useRef(null);
+  // Title and items save independently so an in-flight debounce on one
+  // field is never cancelled/overwritten by an edit to the other.
+  const itemsSaveTimer = useRef(null);
+  const titleSaveTimer = useRef(null);
 
-  function commit(next, { immediate = false } = {}) {
+  function commitItems(next, { immediate = false } = {}) {
     setItems(next);
-    if (saveTimer.current) {
-      clearTimeout(saveTimer.current);
-      saveTimer.current = null;
+    if (itemsSaveTimer.current) {
+      clearTimeout(itemsSaveTimer.current);
+      itemsSaveTimer.current = null;
     }
     if (immediate) {
-      onChangeItems(next);
+      onChangeNote({ items: next });
     } else {
-      saveTimer.current = setTimeout(() => onChangeItems(next), SAVE_DEBOUNCE_MS);
+      itemsSaveTimer.current = setTimeout(() => onChangeNote({ items: next }), SAVE_DEBOUNCE_MS);
     }
   }
 
-  function flush() {
-    if (saveTimer.current) {
-      clearTimeout(saveTimer.current);
-      saveTimer.current = null;
-      onChangeItems(itemsRef.current);
+  function flushItems() {
+    if (itemsSaveTimer.current) {
+      clearTimeout(itemsSaveTimer.current);
+      itemsSaveTimer.current = null;
+      onChangeNote({ items: itemsRef.current });
+    }
+  }
+
+  function commitTitle(next) {
+    setTitle(next);
+    if (titleSaveTimer.current) clearTimeout(titleSaveTimer.current);
+    titleSaveTimer.current = setTimeout(() => onChangeNote({ title: next }), SAVE_DEBOUNCE_MS);
+  }
+
+  function flushTitle() {
+    if (titleSaveTimer.current) {
+      clearTimeout(titleSaveTimer.current);
+      titleSaveTimer.current = null;
+      onChangeNote({ title: titleRef.current });
     }
   }
 
   function handleChangeText(itemId, text) {
-    commit(itemsRef.current.map((it) => (it.id === itemId ? { ...it, text } : it)));
+    commitItems(itemsRef.current.map((it) => (it.id === itemId ? { ...it, text } : it)));
   }
 
   function handleToggleChecked(itemId, checked) {
-    commit(
+    commitItems(
       itemsRef.current.map((it) => (it.id === itemId ? { ...it, checked } : it)),
       { immediate: true }
     );
   }
 
   function handleDeleteItem(itemId) {
-    commit(itemsRef.current.filter((it) => it.id !== itemId), { immediate: true });
+    commitItems(itemsRef.current.filter((it) => it.id !== itemId), { immediate: true });
   }
 
   function handleAddItem() {
@@ -177,7 +200,7 @@ export default function StickyNote({ note, onChangeItems, onDelete }) {
       checked: false,
       position: itemsRef.current.length,
     };
-    commit([...itemsRef.current, newItem], { immediate: true });
+    commitItems([...itemsRef.current, newItem], { immediate: true });
     setAutoFocusId(newItem.id);
   }
 
@@ -188,7 +211,7 @@ export default function StickyNote({ note, onChangeItems, onDelete }) {
       const itemId = flippedItemIdRef.current;
       if (!itemId) return;
       const html = editor.getHTML();
-      commit(itemsRef.current.map((it) => (it.id === itemId ? { ...it, details: html } : it)));
+      commitItems(itemsRef.current.map((it) => (it.id === itemId ? { ...it, details: html } : it)));
     },
   });
 
@@ -199,7 +222,7 @@ export default function StickyNote({ note, onChangeItems, onDelete }) {
   }
 
   function closeBack() {
-    flush();
+    flushItems();
     setFlippedItemId(null);
   }
 
@@ -220,6 +243,14 @@ export default function StickyNote({ note, onChangeItems, onDelete }) {
 
       <div className={`note-flip-inner${flippedItemId ? " flipped" : ""}`}>
         <div className="note-face note-face-front">
+          <input
+            type="text"
+            className="note-title-input"
+            value={title}
+            placeholder="Untitled card"
+            onChange={(e) => commitTitle(e.target.value)}
+            onBlur={flushTitle}
+          />
           <div className="item-list">
             {sorted.map((item) => (
               <ItemRow
@@ -258,7 +289,7 @@ export default function StickyNote({ note, onChangeItems, onDelete }) {
             <div className="note-back-title">{previewText(flippedItem?.text || "", 60) || "Untitled line"}</div>
           </div>
           <NoteToolbar editor={backEditor} />
-          <EditorContent editor={backEditor} className="note-editor" onBlur={flush} />
+          <EditorContent editor={backEditor} className="note-editor" onBlur={flushItems} />
         </div>
       </div>
     </div>

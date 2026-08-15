@@ -19,13 +19,15 @@ Postgres storage.
   interface and doesn't know which backend it's talking to.
 - `supabase/schema.sql` creates the `decks` and `notes` tables with Row
   Level Security so each authenticated user only ever sees their own rows.
-- Each note ("card") holds a list of **line items** in its `items` jsonb
+- Each note ("card") has a `title` column shown at the top of the front,
+  above the line items, plus a list of **line items** in its `items` jsonb
   column: `[{ id, text, details, checked, position }]`. The front of the
-  card is that list — checkbox, plain text, a → arrow. Clicking the arrow
-  on a specific line flips the whole card over (CSS 3D transform); the back
-  shows that line's text as a read-only title plus its own Tiptap editor
-  (bold/italic/underline/strikethrough/lists/checklists) for extended
-  details, saved separately per line item, not shared across the card.
+  card is the title and that list — checkbox, plain text, a → arrow.
+  Clicking the arrow on a specific line flips the whole card over (CSS 3D
+  transform); the back shows that line's text as a read-only title plus
+  its own Tiptap editor (bold/italic/underline/strikethrough/lists/
+  checklists) for extended details, saved separately per line item, not
+  shared across the card.
 - Older `body`/`details` text columns still exist on `notes` for anything
   created before this model, and `schema.sql` has a one-time backfill that
   wraps that old content into a single item so nothing is lost. Safe to

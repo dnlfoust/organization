@@ -45,6 +45,7 @@ export const initialNotes = [
     deckId: "deck-3",
     color: "#bbf7d0",
     position: 0,
+    title: "Weekend to-dos",
     items: [
       {
         id: "item-5a",

@@ -9,7 +9,7 @@ export default function DeckColumn({
   expanded,
   onToggleExpand,
   onAddNote,
-  onChangeItems,
+  onChangeNote,
   onDeleteNote,
   onDeleteDeck,
 }) {
@@ -43,7 +43,7 @@ export default function DeckColumn({
                 <StickyNote
                   key={note.id}
                   note={note}
-                  onChangeItems={(items) => onChangeItems(note.id, items)}
+                  onChangeNote={(patch) => onChangeNote(note.id, patch)}
                   onDelete={onDeleteNote}
                 />
               ))}
@@ -65,7 +65,7 @@ export default function DeckColumn({
           ))}
           <div className="deck-stack-top" style={{ "--note-color": deck.color }}>
             {topNote ? (
-              <p>{previewText(topNote.items?.[0]?.text || "") || "Untitled note"}</p>
+              <p>{previewText(topNote.title || topNote.items?.[0]?.text || "") || "Untitled note"}</p>
             ) : (
               <p className="deck-stack-empty">No notes yet — click to add one</p>
             )}
