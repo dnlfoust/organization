@@ -609,10 +609,10 @@
   background: none;
   color: rgba(28, 33, 40, 0.45);
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: 1.2rem;
   font-weight: 700;
   line-height: 1;
-  padding: 0.15rem 0.25rem;
+  padding: 0.2rem 0.35rem;
   opacity: 0;
   transition: opacity 0.15s;
 }
