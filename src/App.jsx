@@ -97,28 +97,20 @@ export default function App() {
     try {
       const position = (notesByDeck[deckId]?.length ?? 0);
       const deck = decks.find((d) => d.id === deckId);
-      const note = await dataClient.createNote({ deckId, body: "", color: deck.color, position });
+      const items = [{ id: crypto.randomUUID(), text: "", details: "", checked: false, position: 0 }];
+      const note = await dataClient.createNote({ deckId, color: deck.color, position, items });
       setNotes((prev) => [...prev, note]);
     } catch (err) {
       alert(`Couldn't create note: ${err.message}`);
     }
   }
 
-  async function handleChangeNote(noteId, body) {
-    setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, body } : n)));
+  async function handleChangeItems(noteId, items) {
+    setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, items } : n)));
     try {
-      await dataClient.updateNote(noteId, { body });
+      await dataClient.updateNote(noteId, { items });
     } catch (err) {
       alert(`Couldn't save note: ${err.message}`);
-    }
-  }
-
-  async function handleChangeDetails(noteId, details) {
-    setNotes((prev) => prev.map((n) => (n.id === noteId ? { ...n, details } : n)));
-    try {
-      await dataClient.updateNote(noteId, { details });
-    } catch (err) {
-      alert(`Couldn't save details: ${err.message}`);
     }
   }
 
@@ -134,7 +126,8 @@ export default function App() {
   async function handleAddDeck({ title, color }) {
     try {
       const deck = await dataClient.createDeck({ title, color, position: decks.length });
-      const note = await dataClient.createNote({ deckId: deck.id, body: "", color, position: 0 });
+      const items = [{ id: crypto.randomUUID(), text: "", details: "", checked: false, position: 0 }];
+      const note = await dataClient.createNote({ deckId: deck.id, color, position: 0, items });
       setDecks((prev) => [...prev, deck]);
       setNotes((prev) => [...prev, note]);
       setExpandedDeckIds((prev) => new Set(prev).add(deck.id));
@@ -191,8 +184,7 @@ export default function App() {
               expanded={expandedDeckIds.has(deck.id)}
               onToggleExpand={() => toggleDeckExpanded(deck.id)}
               onAddNote={handleAddNote}
-              onChangeNote={handleChangeNote}
-              onChangeDetails={handleChangeDetails}
+              onChangeItems={handleChangeItems}
               onDeleteNote={handleDeleteNote}
               onDeleteDeck={handleDeleteDeck}
             />

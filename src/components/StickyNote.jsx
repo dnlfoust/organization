@@ -9,35 +9,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import { previewText } from "../lib/text";
 
 const SAVE_DEBOUNCE_MS = 800;
-
-function useDebouncedSave(committedValue, onSave, delay = SAVE_DEBOUNCE_MS) {
-  const timer = useRef(null);
-  const latest = useRef(committedValue);
-
-  useEffect(() => {
-    return () => {
-      if (timer.current) clearTimeout(timer.current);
-    };
-  }, []);
-
-  function update(value) {
-    latest.current = value;
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => onSave(latest.current), delay);
-  }
-
-  function flush() {
-    if (timer.current) {
-      clearTimeout(timer.current);
-      timer.current = null;
-    }
-    if (latest.current !== committedValue) {
-      onSave(latest.current);
-    }
-  }
-
-  return { update, flush };
-}
+const DETAILS_EXTENSIONS = [StarterKit, Underline, TaskList, TaskItem.configure({ nested: false })];
 
 function ToolbarButton({ label, title, active, onToggle, className }) {
   return (
@@ -45,8 +17,6 @@ function ToolbarButton({ label, title, active, onToggle, className }) {
       type="button"
       className={`note-toolbar-btn${active ? " active" : ""}${className ? ` ${className}` : ""}`}
       title={title}
-      // Prevent the button from stealing focus away from the editor before
-      // the click is registered, which would otherwise cancel the toggle.
       onMouseDown={(e) => e.preventDefault()}
       onClick={onToggle}
     >
@@ -55,7 +25,7 @@ function ToolbarButton({ label, title, active, onToggle, className }) {
   );
 }
 
-function NoteToolbar({ editor, trailing }) {
+function NoteToolbar({ editor }) {
   if (!editor) return null;
   return (
     <div className="note-toolbar">
@@ -99,32 +69,142 @@ function NoteToolbar({ editor, trailing }) {
         active={editor.isActive("taskList")}
         onToggle={() => editor.chain().focus().toggleTaskList().run()}
       />
-      {trailing}
     </div>
   );
 }
 
-const EDITOR_EXTENSIONS = [StarterKit, Underline, TaskList, TaskItem.configure({ nested: false })];
+function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onFlip, onEnter }) {
+  const inputRef = useRef(null);
 
-export default function StickyNote({ note, onChange, onChangeDetails, onDelete }) {
+  useEffect(() => {
+    if (autoFocus && inputRef.current) inputRef.current.focus();
+  }, [autoFocus]);
+
+  return (
+    <div className="item-row">
+      <input
+        type="checkbox"
+        className="item-checkbox"
+        checked={item.checked}
+        onChange={(e) => onToggleChecked(e.target.checked)}
+      />
+      <input
+        ref={inputRef}
+        type="text"
+        className={`item-text${item.checked ? " checked" : ""}`}
+        value={item.text}
+        placeholder="Write a line…"
+        onChange={(e) => onChangeText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            onEnter();
+          }
+        }}
+      />
+      <button type="button" className="item-flip-btn" title="Add details" onClick={onFlip}>
+        →
+      </button>
+      <button type="button" className="item-delete-btn" title="Delete line" onClick={onDelete}>
+        ×
+      </button>
+    </div>
+  );
+}
+
+export default function StickyNote({ note, onChangeItems, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: note.id,
   });
-  const [flipped, setFlipped] = useState(false);
 
-  const bodySave = useDebouncedSave(note.body, onChange);
-  const frontEditor = useEditor({
-    extensions: EDITOR_EXTENSIONS,
-    content: note.body,
-    onUpdate: ({ editor }) => bodySave.update(editor.getHTML()),
-  });
+  const [items, setItems] = useState(note.items ?? []);
+  const [flippedItemId, setFlippedItemId] = useState(null);
+  const [autoFocusId, setAutoFocusId] = useState(null);
 
-  const detailsSave = useDebouncedSave(note.details, onChangeDetails);
+  const itemsRef = useRef(items);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+
+  const flippedItemIdRef = useRef(flippedItemId);
+  useEffect(() => {
+    flippedItemIdRef.current = flippedItemId;
+  }, [flippedItemId]);
+
+  const saveTimer = useRef(null);
+
+  function commit(next, { immediate = false } = {}) {
+    setItems(next);
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    if (immediate) {
+      onChangeItems(next);
+    } else {
+      saveTimer.current = setTimeout(() => onChangeItems(next), SAVE_DEBOUNCE_MS);
+    }
+  }
+
+  function flush() {
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+      onChangeItems(itemsRef.current);
+    }
+  }
+
+  function handleChangeText(itemId, text) {
+    commit(itemsRef.current.map((it) => (it.id === itemId ? { ...it, text } : it)));
+  }
+
+  function handleToggleChecked(itemId, checked) {
+    commit(
+      itemsRef.current.map((it) => (it.id === itemId ? { ...it, checked } : it)),
+      { immediate: true }
+    );
+  }
+
+  function handleDeleteItem(itemId) {
+    commit(itemsRef.current.filter((it) => it.id !== itemId), { immediate: true });
+  }
+
+  function handleAddItem() {
+    const newItem = {
+      id: crypto.randomUUID(),
+      text: "",
+      details: "",
+      checked: false,
+      position: itemsRef.current.length,
+    };
+    commit([...itemsRef.current, newItem], { immediate: true });
+    setAutoFocusId(newItem.id);
+  }
+
   const backEditor = useEditor({
-    extensions: EDITOR_EXTENSIONS,
-    content: note.details,
-    onUpdate: ({ editor }) => detailsSave.update(editor.getHTML()),
+    extensions: DETAILS_EXTENSIONS,
+    content: "",
+    onUpdate: ({ editor }) => {
+      const itemId = flippedItemIdRef.current;
+      if (!itemId) return;
+      const html = editor.getHTML();
+      commit(itemsRef.current.map((it) => (it.id === itemId ? { ...it, details: html } : it)));
+    },
   });
+
+  function openBack(itemId) {
+    const item = itemsRef.current.find((it) => it.id === itemId);
+    backEditor?.commands.setContent(item?.details || "", false);
+    setFlippedItemId(itemId);
+  }
+
+  function closeBack() {
+    flush();
+    setFlippedItemId(null);
+  }
+
+  const flippedItem = items.find((it) => it.id === flippedItemId);
+  const sorted = items.slice().sort((a, b) => a.position - b.position);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -138,26 +218,28 @@ export default function StickyNote({ note, onChange, onChangeDetails, onDelete }
         ⠿
       </div>
 
-      <div className={`note-flip-inner${flipped ? " flipped" : ""}`}>
+      <div className={`note-flip-inner${flippedItemId ? " flipped" : ""}`}>
         <div className="note-face note-face-front">
-          <NoteToolbar
-            editor={frontEditor}
-            trailing={
-              <button
-                type="button"
-                className="note-flip-btn"
-                title="Add details"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => setFlipped(true)}
-              >
-                →
-              </button>
-            }
-          />
-          <EditorContent editor={frontEditor} className="note-editor" onBlur={bodySave.flush} />
+          <div className="item-list">
+            {sorted.map((item) => (
+              <ItemRow
+                key={item.id}
+                item={item}
+                autoFocus={item.id === autoFocusId}
+                onChangeText={(text) => handleChangeText(item.id, text)}
+                onToggleChecked={(checked) => handleToggleChecked(item.id, checked)}
+                onDelete={() => handleDeleteItem(item.id)}
+                onFlip={() => openBack(item.id)}
+                onEnter={handleAddItem}
+              />
+            ))}
+          </div>
+          <button type="button" className="item-add-btn" onClick={handleAddItem}>
+            + Add line
+          </button>
           <div className="sticky-note-footer">
             <button className="sticky-note-delete" onClick={() => onDelete(note.id)}>
-              Delete
+              Delete card
             </button>
           </div>
         </div>
@@ -169,14 +251,14 @@ export default function StickyNote({ note, onChange, onChangeDetails, onDelete }
               className="note-flip-btn"
               title="Back to note"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => setFlipped(false)}
+              onClick={closeBack}
             >
               ←
             </button>
-            <div className="note-back-title">{previewText(note.body, 60) || "Untitled note"}</div>
+            <div className="note-back-title">{previewText(flippedItem?.text || "", 60) || "Untitled line"}</div>
           </div>
           <NoteToolbar editor={backEditor} />
-          <EditorContent editor={backEditor} className="note-editor" onBlur={detailsSave.flush} />
+          <EditorContent editor={backEditor} className="note-editor" onBlur={flush} />
         </div>
       </div>
     </div>

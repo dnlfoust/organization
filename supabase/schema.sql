@@ -26,15 +26,34 @@ create table if not exists notes (
   deck_id uuid not null references decks(id) on delete cascade,
   body text not null default '',
   details text not null default '',
+  items jsonb not null default '[]'::jsonb,
   color text not null default '#fef08a',
   position integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
--- Safe to re-run: adds `details` (the back-of-card notes) to a notes table
--- that was created before this column existed. No-op on a fresh install.
+-- Safe to re-run: adds columns to a notes table created before they existed.
+-- No-op on a fresh install (the create table above already has them).
 alter table notes add column if not exists details text not null default '';
+alter table notes add column if not exists items jsonb not null default '[]'::jsonb;
+
+-- One-time backfill: a card is now a list of line items (each independently
+-- flippable with its own details), not one body + one shared details. Any
+-- note still on the old shape gets its existing body/details wrapped into a
+-- single first item, so nothing already written is lost. Guarded by the
+-- `items = '[]'` check, so re-running this is a no-op past the first time.
+update notes
+set items = jsonb_build_array(
+  jsonb_build_object(
+    'id', gen_random_uuid()::text,
+    'text', coalesce(body, ''),
+    'details', coalesce(details, ''),
+    'checked', false,
+    'position', 0
+  )
+)
+where items = '[]'::jsonb;
 
 create index if not exists notes_deck_id_idx on notes(deck_id);
 create index if not exists decks_user_id_idx on decks(user_id);

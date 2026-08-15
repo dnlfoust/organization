@@ -19,16 +19,17 @@ Postgres storage.
   interface and doesn't know which backend it's talking to.
 - `supabase/schema.sql` creates the `decks` and `notes` tables with Row
   Level Security so each authenticated user only ever sees their own rows.
-- Each note's `body` is stored as HTML (Tiptap's output) rather than plain
-  text, which is what makes bold/italic/underline/strikethrough, bulleted
-  lists, and checklists possible. No schema change was needed for this —
-  `notes.body` was already a plain `text` column.
-- Each note also has a `details` column (same HTML-via-Tiptap approach) for
-  the back of the card. Clicking the → arrow on a note flips it over; the
-  back shows the front's text as a read-only title and a separate editor
-  for extended notes. If you ran `schema.sql` before this existed, just
-  re-run it — the `alter table ... add column if not exists` line makes it
-  safe to run again against an existing database.
+- Each note ("card") holds a list of **line items** in its `items` jsonb
+  column: `[{ id, text, details, checked, position }]`. The front of the
+  card is that list — checkbox, plain text, a → arrow. Clicking the arrow
+  on a specific line flips the whole card over (CSS 3D transform); the back
+  shows that line's text as a read-only title plus its own Tiptap editor
+  (bold/italic/underline/strikethrough/lists/checklists) for extended
+  details, saved separately per line item, not shared across the card.
+- Older `body`/`details` text columns still exist on `notes` for anything
+  created before this model, and `schema.sql` has a one-time backfill that
+  wraps that old content into a single item so nothing is lost. Safe to
+  re-run against an existing database.
 
 ## Local development
 

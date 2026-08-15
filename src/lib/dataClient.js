@@ -4,6 +4,10 @@ import { initialDecks, initialNotes } from "../demoData";
 // Thin data-access layer so <App> doesn't care whether it's talking to
 // Supabase or to the local demo store. Both implementations expose the
 // same async shape.
+//
+// A note ("card") holds a list of line items, each independently
+// flippable with its own `details` — see StickyNote.jsx. `items` is:
+//   [{ id, text, details, checked, position }]
 
 const DEMO_KEY = "organization-demo-data";
 
@@ -64,9 +68,9 @@ const demoClient = {
     saveDemoState(state);
   },
 
-  async createNote({ deckId, body, color, position, details = "" }) {
+  async createNote({ deckId, color, position, items = [] }) {
     const state = loadDemoState();
-    const note = { id: uid(), deckId, body, color, position, details };
+    const note = { id: uid(), deckId, color, position, items };
     state.notes.push(note);
     saveDemoState(state);
     return note;
@@ -123,8 +127,7 @@ const supabaseClient = {
     return data.map((n) => ({
       id: n.id,
       deckId: n.deck_id,
-      body: n.body,
-      details: n.details,
+      items: n.items ?? [],
       color: n.color,
       position: n.position,
     }));
@@ -146,14 +149,13 @@ const supabaseClient = {
     if (error) throw error;
   },
 
-  async createNote({ deckId, body, color, position, details = "" }) {
+  async createNote({ deckId, color, position, items = [] }) {
     const { data: sessionData } = await supabase.auth.getSession();
     const { data, error } = await supabase
       .from("notes")
       .insert({
         deck_id: deckId,
-        body,
-        details,
+        items,
         color,
         position,
         user_id: sessionData.session.user.id,
@@ -164,8 +166,7 @@ const supabaseClient = {
     return {
       id: data.id,
       deckId: data.deck_id,
-      body: data.body,
-      details: data.details,
+      items: data.items ?? [],
       color: data.color,
       position: data.position,
     };
@@ -173,8 +174,7 @@ const supabaseClient = {
 
   async updateNote(noteId, changes) {
     const patch = {};
-    if (changes.body !== undefined) patch.body = changes.body;
-    if (changes.details !== undefined) patch.details = changes.details;
+    if (changes.items !== undefined) patch.items = changes.items;
     if (changes.color !== undefined) patch.color = changes.color;
     if (changes.position !== undefined) patch.position = changes.position;
     if (changes.deckId !== undefined) patch.deck_id = changes.deckId;
