@@ -6,8 +6,6 @@ import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
-import { previewText } from "../lib/text";
-
 const SAVE_DEBOUNCE_MS = 800;
 const DETAILS_EXTENSIONS = [StarterKit, Underline, TaskList, TaskItem.configure({ nested: false })];
 
@@ -73,11 +71,21 @@ function NoteToolbar({ editor }) {
   );
 }
 
+function autoResize(el) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
+
 function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onFlip, onEnter }) {
-  const inputRef = useRef(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
-    if (autoFocus && inputRef.current) inputRef.current.focus();
+    autoResize(textareaRef.current);
+  }, [item.text]);
+
+  useEffect(() => {
+    if (autoFocus && textareaRef.current) textareaRef.current.focus();
   }, [autoFocus]);
 
   return (
@@ -88,15 +96,15 @@ function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onF
         checked={item.checked}
         onChange={(e) => onToggleChecked(e.target.checked)}
       />
-      <input
-        ref={inputRef}
-        type="text"
+      <textarea
+        ref={textareaRef}
+        rows={1}
         className={`item-text${item.checked ? " checked" : ""}`}
         value={item.text}
         placeholder="Write a line…"
         onChange={(e) => onChangeText(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
+          if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             onEnter();
           }
@@ -286,7 +294,7 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
             >
               ←
             </button>
-            <div className="note-back-title">{previewText(flippedItem?.text || "", 60) || "Untitled line"}</div>
+            <div className="note-back-title">{flippedItem?.text || "Untitled line"}</div>
           </div>
           <NoteToolbar editor={backEditor} />
           <EditorContent editor={backEditor} className="note-editor" onBlur={flushItems} />

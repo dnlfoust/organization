@@ -405,17 +405,20 @@
 
 .note-back-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.4rem;
   margin-bottom: 0.35rem;
+}
+
+.note-back-header .note-flip-btn {
+  margin-top: 0.1rem;
 }
 
 .note-back-title {
   font-weight: 700;
   font-size: 0.85rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
   min-width: 0;
 }
 
@@ -573,13 +576,14 @@
 
 .item-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.35rem;
 }
 
 .item-checkbox {
   flex-shrink: 0;
   cursor: pointer;
+  margin-top: 0.3rem;
 }
 
 .item-text {
@@ -587,8 +591,12 @@
   min-width: 0;
   border: none;
   background: transparent;
+  resize: none;
+  overflow: hidden;
+  overflow-wrap: break-word;
   font-family: inherit;
   font-size: 0.85rem;
+  line-height: 1.35;
   color: inherit;
   padding: 0.2rem 0;
 }
@@ -613,6 +621,7 @@
   font-weight: 700;
   line-height: 1;
   padding: 0.2rem 0.35rem;
+  margin-top: 0.1rem;
   opacity: 0;
   transition: opacity 0.15s;
 }
