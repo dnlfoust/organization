@@ -357,6 +357,49 @@
   cursor: grabbing;
 }
 
+.sticky-note-resize-handle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 2px 3px;
+  cursor: nwse-resize;
+  color: rgba(28, 33, 40, 0.35);
+  font-size: 0.85rem;
+  line-height: 1;
+  touch-action: none;
+  user-select: none;
+}
+
+.sticky-note-resize-handle:hover {
+  color: rgba(28, 33, 40, 0.75);
+}
+
+.sticky-note-reset-size {
+  position: absolute;
+  bottom: 0.3rem;
+  left: 0.4rem;
+  z-index: 2;
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
+  color: rgba(28, 33, 40, 0.6);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  cursor: pointer;
+}
+
+.sticky-note-reset-size:hover {
+  color: #1c2128;
+  background: rgba(255, 255, 255, 0.9);
+}
+
 /* ---------- Card flip (front = note, back = details) ---------- */
 
 .note-flip-inner {

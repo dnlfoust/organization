@@ -9,6 +9,11 @@ import TaskItem from "@tiptap/extension-task-item";
 const SAVE_DEBOUNCE_MS = 800;
 const DETAILS_EXTENSIONS = [StarterKit, Underline, TaskList, TaskItem.configure({ nested: false })];
 
+const MIN_CARD_WIDTH = 160;
+const MAX_CARD_WIDTH = 640;
+const MIN_CARD_HEIGHT = 140;
+const MAX_CARD_HEIGHT = 900;
+
 function ToolbarButton({ label, title, active, onToggle, className }) {
   return (
     <button
@@ -129,6 +134,42 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
   const [items, setItems] = useState(note.items ?? []);
   const [flippedItemId, setFlippedItemId] = useState(null);
   const [autoFocusId, setAutoFocusId] = useState(null);
+  const [customSize, setCustomSize] = useState(null); // { width, height } in px, or null = default shape
+
+  function startResize(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const card = e.currentTarget.parentElement;
+    const startRect = card.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    // Cap width to the column's own content width so a wider card can't
+    // push sibling deck columns around — height is free to grow since that
+    // only makes this column taller/scrollable, not the whole board wider.
+    let maxWidth = MAX_CARD_WIDTH;
+    const parent = card.parentElement;
+    if (parent) {
+      const parentStyle = window.getComputedStyle(parent);
+      const paddingX = parseFloat(parentStyle.paddingLeft || "0") + parseFloat(parentStyle.paddingRight || "0");
+      maxWidth = Math.min(MAX_CARD_WIDTH, parent.clientWidth - paddingX);
+    }
+
+    function onMove(ev) {
+      const width = Math.min(maxWidth, Math.max(MIN_CARD_WIDTH, startRect.width + (ev.clientX - startX)));
+      const height = Math.min(MAX_CARD_HEIGHT, Math.max(MIN_CARD_HEIGHT, startRect.height + (ev.clientY - startY)));
+      setCustomSize({ width, height });
+    }
+    function onUp() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  function resetSize() {
+    setCustomSize(null);
+  }
 
   const itemsRef = useRef(items);
   useEffect(() => {
@@ -241,12 +282,27 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
     transform: CSS.Transform.toString(transform),
     transition,
     "--note-color": note.color,
+    ...(customSize ? { width: `${customSize.width}px`, height: `${customSize.height}px` } : {}),
   };
 
   return (
     <div ref={setNodeRef} style={style} className={`sticky-note${isDragging ? " dragging" : ""}`}>
       <div className="sticky-note-handle" {...attributes} {...listeners} aria-label="Drag note">
         ⠿
+      </div>
+
+      {customSize && (
+        <button type="button" className="sticky-note-reset-size" title="Reset to default size" onClick={resetSize}>
+          ↺
+        </button>
+      )}
+      <div
+        className="sticky-note-resize-handle"
+        title="Drag to resize"
+        onPointerDown={startResize}
+        onDoubleClick={resetSize}
+      >
+        ⤡
       </div>
 
       <div className={`note-flip-inner${flippedItemId ? " flipped" : ""}`}>

@@ -32,6 +32,12 @@ Postgres storage.
   created before this model, and `schema.sql` has a one-time backfill that
   wraps that old content into a single item so nothing is lost. Safe to
   re-run against an existing database.
+- Cards can be resized by dragging the small ⤡ handle in the bottom-right
+  corner (width is capped to the deck column's width so a wider card can't
+  push other decks around; height is uncapped). A ↺ button appears once a
+  card has a custom size, to snap it back to the default shape. This is
+  client-side only (React state), not persisted — a reload resets every
+  card to default too.
 
 ## Local development
 
