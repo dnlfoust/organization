@@ -33,8 +33,10 @@ Postgres storage.
   wraps that old content into a single item so nothing is lost. Safe to
   re-run against an existing database.
 - Both notes and individual line items carry `archived`. Archiving a card
-  (the "Archive" button next to "Delete card") or a line (the ⊡ button on
-  its row) hides it from the active view without deleting it; an
+  (the "Archive" button next to "Delete card") hides it from the active
+  view without deleting it; archiving a line is done from its flipped-over
+  back ("Archive line", next to the details editor) rather than from the
+  front row, to keep each row down to just the → and × buttons. An
   "Archived (N)" toggle appears — for cards, below "+ Add note"; for
   lines, below "+ Add line" — to see and restore (↺) or permanently
   delete (×) them later.

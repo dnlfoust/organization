@@ -82,7 +82,7 @@ function autoResize(el) {
   el.style.height = `${el.scrollHeight}px`;
 }
 
-function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onFlip, onEnter, onArchive }) {
+function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onFlip, onEnter }) {
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -117,9 +117,6 @@ function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onF
       />
       <button type="button" className="item-flip-btn" title="Add details" onClick={onFlip}>
         →
-      </button>
-      <button type="button" className="item-archive-btn" title="Archive line" onClick={onArchive}>
-        ⊡
       </button>
       <button type="button" className="item-delete-btn" title="Delete line" onClick={onDelete}>
         ×
@@ -287,6 +284,14 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
     setFlippedItemId(null);
   }
 
+  function archiveFlippedItem() {
+    const itemId = flippedItemId;
+    if (!itemId) return;
+    flushItems();
+    handleArchiveItem(itemId, true);
+    setFlippedItemId(null);
+  }
+
   const flippedItem = items.find((it) => it.id === flippedItemId);
   const activeItems = items.filter((it) => !it.archived).sort((a, b) => a.position - b.position);
   const archivedItems = items.filter((it) => it.archived).sort((a, b) => a.position - b.position);
@@ -339,7 +344,6 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
                 onDelete={() => handleDeleteItem(item.id)}
                 onFlip={() => openBack(item.id)}
                 onEnter={handleAddItem}
-                onArchive={() => handleArchiveItem(item.id, true)}
               />
             ))}
           </div>
@@ -405,6 +409,11 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
           </div>
           <NoteToolbar editor={backEditor} />
           <EditorContent editor={backEditor} className="note-editor" onBlur={flushItems} />
+          <div className="note-back-footer">
+            <button type="button" className="note-back-archive" onClick={archiveFlippedItem}>
+              Archive line
+            </button>
+          </div>
         </div>
       </div>
     </div>

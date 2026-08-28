@@ -631,6 +631,26 @@
   color: #b42318;
 }
 
+.note-back-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  margin-top: 0.4rem;
+}
+
+.note-back-archive {
+  background: none;
+  border: none;
+  color: rgba(28, 33, 40, 0.55);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.3rem;
+}
+
+.note-back-archive:hover {
+  color: #1c2128;
+}
+
 /* ---------- Line items (front of card) ---------- */
 
 .note-title-input {
@@ -704,7 +724,6 @@
 }
 
 .item-flip-btn,
-.item-archive-btn,
 .item-delete-btn {
   flex-shrink: 0;
   border: none;
@@ -721,19 +740,13 @@
 }
 
 .item-row:hover .item-flip-btn,
-.item-row:hover .item-archive-btn,
 .item-row:hover .item-delete-btn,
 .item-flip-btn:focus,
-.item-archive-btn:focus,
 .item-delete-btn:focus {
   opacity: 1;
 }
 
 .item-flip-btn:hover {
-  color: #1c2128;
-}
-
-.item-archive-btn:hover {
   color: #1c2128;
 }
 
