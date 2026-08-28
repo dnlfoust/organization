@@ -1,7 +1,13 @@
+import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import StickyNote from "./StickyNote";
 import { previewText } from "../lib/text";
+
+const MIN_DECK_WIDTH = 220;
+const MAX_DECK_WIDTH = 600;
+const MIN_DECK_HEIGHT = 200;
+const MAX_DECK_HEIGHT = 1400;
 
 export default function DeckColumn({
   deck,
@@ -19,8 +25,39 @@ export default function DeckColumn({
   const topNote = sorted[0];
   const shadowCount = Math.min(Math.max(notes.length - 1, 0), 2);
 
+  const [customSize, setCustomSize] = useState(null); // { width, height } in px, or null = default
+
+  function startResize(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const column = e.currentTarget.parentElement;
+    const startRect = column.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+
+    function onMove(ev) {
+      const width = Math.min(MAX_DECK_WIDTH, Math.max(MIN_DECK_WIDTH, startRect.width + (ev.clientX - startX)));
+      const height = Math.min(MAX_DECK_HEIGHT, Math.max(MIN_DECK_HEIGHT, startRect.height + (ev.clientY - startY)));
+      setCustomSize({ width, height });
+    }
+    function onUp() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  function resetSize() {
+    setCustomSize(null);
+  }
+
+  const columnStyle = customSize
+    ? { flex: `0 0 ${customSize.width}px`, maxHeight: `${customSize.height}px` }
+    : undefined;
+
   return (
-    <div className="deck-column">
+    <div className="deck-column" style={columnStyle}>
       <div className="deck-column-header">
         <button className="deck-toggle-btn" onClick={onToggleExpand} title={expanded ? "Collapse deck" : "Expand deck"}>
           {expanded ? "▾" : "▸"}
@@ -72,6 +109,20 @@ export default function DeckColumn({
           </div>
         </div>
       )}
+
+      {customSize && (
+        <button type="button" className="deck-reset-size" title="Reset to default size" onClick={resetSize}>
+          ↺
+        </button>
+      )}
+      <div
+        className="deck-resize-handle"
+        title="Drag to resize deck"
+        onPointerDown={startResize}
+        onDoubleClick={resetSize}
+      >
+        ⤡
+      </div>
     </div>
   );
 }
