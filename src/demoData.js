@@ -3,7 +3,8 @@
 // so swapping in real data later is a drop-in.
 //
 // Each note is a card holding a list of line items; each item can be
-// flipped independently to show/edit its own `details`.
+// flipped independently to show/edit its own `details`. Notes and items
+// both carry `archived` so they can be hidden without being deleted.
 
 export const initialDecks = [
   { id: "deck-1", title: "Work", color: "#fde68a", position: 0 },
@@ -17,28 +18,32 @@ export const initialNotes = [
     deckId: "deck-1",
     color: "#fde68a",
     position: 0,
-    items: [{ id: "item-1", text: "Finish Q3 portfolio review", details: "", checked: false, position: 0 }],
+    archived: false,
+    items: [{ id: "item-1", text: "Finish Q3 portfolio review", details: "", checked: false, archived: false, position: 0 }],
   },
   {
     id: "note-2",
     deckId: "deck-1",
     color: "#fde68a",
     position: 1,
-    items: [{ id: "item-2", text: "Reply to compliance email", details: "", checked: false, position: 0 }],
+    archived: false,
+    items: [{ id: "item-2", text: "Reply to compliance email", details: "", checked: false, archived: false, position: 0 }],
   },
   {
     id: "note-3",
     deckId: "deck-2",
     color: "#bfdbfe",
     position: 0,
-    items: [{ id: "item-3", text: "Wire up Supabase auth", details: "", checked: false, position: 0 }],
+    archived: false,
+    items: [{ id: "item-3", text: "Wire up Supabase auth", details: "", checked: false, archived: false, position: 0 }],
   },
   {
     id: "note-4",
     deckId: "deck-2",
     color: "#bfdbfe",
     position: 1,
-    items: [{ id: "item-4", text: "Pick a color palette", details: "", checked: false, position: 0 }],
+    archived: false,
+    items: [{ id: "item-4", text: "Pick a color palette", details: "", checked: false, archived: false, position: 0 }],
   },
   {
     id: "note-5",
@@ -46,12 +51,14 @@ export const initialNotes = [
     color: "#bbf7d0",
     position: 0,
     title: "Weekend to-dos",
+    archived: false,
     items: [
       {
         id: "item-5a",
         text: "Call plumber about upstairs sink",
         details: "<p>Ask about the quote for re-piping while they're out.</p>",
         checked: false,
+        archived: false,
         position: 0,
       },
       {
@@ -59,7 +66,16 @@ export const initialNotes = [
         text: "Buy exterior paint",
         details: "",
         checked: false,
+        archived: false,
         position: 1,
+      },
+      {
+        id: "item-5c",
+        text: "Rake the leaves",
+        details: "",
+        checked: true,
+        archived: true,
+        position: 2,
       },
     ],
   },

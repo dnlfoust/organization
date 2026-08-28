@@ -7,7 +7,9 @@ import { initialDecks, initialNotes } from "../demoData";
 //
 // A note ("card") holds a list of line items, each independently
 // flippable with its own `details` — see StickyNote.jsx. `items` is:
-//   [{ id, text, details, checked, position }]
+//   [{ id, text, details, checked, archived, position }]
+// Both notes and items carry `archived` so they can be hidden from the
+// active board without deleting them — see DeckColumn.jsx / StickyNote.jsx.
 
 const DEMO_KEY = "organization-demo-data";
 
@@ -70,7 +72,7 @@ const demoClient = {
 
   async createNote({ deckId, color, position, items = [], title = "" }) {
     const state = loadDemoState();
-    const note = { id: uid(), deckId, color, position, items, title };
+    const note = { id: uid(), deckId, color, position, items, title, archived: false };
     state.notes.push(note);
     saveDemoState(state);
     return note;
@@ -129,6 +131,7 @@ const supabaseClient = {
       deckId: n.deck_id,
       items: n.items ?? [],
       title: n.title ?? "",
+      archived: n.archived ?? false,
       color: n.color,
       position: n.position,
     }));
@@ -170,6 +173,7 @@ const supabaseClient = {
       deckId: data.deck_id,
       items: data.items ?? [],
       title: data.title ?? "",
+      archived: data.archived ?? false,
       color: data.color,
       position: data.position,
     };
@@ -179,6 +183,7 @@ const supabaseClient = {
     const patch = {};
     if (changes.items !== undefined) patch.items = changes.items;
     if (changes.title !== undefined) patch.title = changes.title;
+    if (changes.archived !== undefined) patch.archived = changes.archived;
     if (changes.color !== undefined) patch.color = changes.color;
     if (changes.position !== undefined) patch.position = changes.position;
     if (changes.deckId !== undefined) patch.deck_id = changes.deckId;

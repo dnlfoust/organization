@@ -82,7 +82,7 @@ function autoResize(el) {
   el.style.height = `${el.scrollHeight}px`;
 }
 
-function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onFlip, onEnter }) {
+function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onFlip, onEnter, onArchive }) {
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -118,6 +118,9 @@ function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onF
       <button type="button" className="item-flip-btn" title="Add details" onClick={onFlip}>
         →
       </button>
+      <button type="button" className="item-archive-btn" title="Archive line" onClick={onArchive}>
+        ⊡
+      </button>
       <button type="button" className="item-delete-btn" title="Delete line" onClick={onDelete}>
         ×
       </button>
@@ -135,6 +138,7 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
   const [flippedItemId, setFlippedItemId] = useState(null);
   const [autoFocusId, setAutoFocusId] = useState(null);
   const [customSize, setCustomSize] = useState(null); // { width, height } in px, or null = default shape
+  const [showArchivedItems, setShowArchivedItems] = useState(false);
 
   function startResize(e) {
     e.preventDefault();
@@ -241,12 +245,20 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
     commitItems(itemsRef.current.filter((it) => it.id !== itemId), { immediate: true });
   }
 
+  function handleArchiveItem(itemId, archived) {
+    commitItems(
+      itemsRef.current.map((it) => (it.id === itemId ? { ...it, archived } : it)),
+      { immediate: true }
+    );
+  }
+
   function handleAddItem() {
     const newItem = {
       id: crypto.randomUUID(),
       text: "",
       details: "",
       checked: false,
+      archived: false,
       position: itemsRef.current.length,
     };
     commitItems([...itemsRef.current, newItem], { immediate: true });
@@ -276,7 +288,8 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
   }
 
   const flippedItem = items.find((it) => it.id === flippedItemId);
-  const sorted = items.slice().sort((a, b) => a.position - b.position);
+  const activeItems = items.filter((it) => !it.archived).sort((a, b) => a.position - b.position);
+  const archivedItems = items.filter((it) => it.archived).sort((a, b) => a.position - b.position);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -316,7 +329,7 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
             onBlur={flushTitle}
           />
           <div className="item-list">
-            {sorted.map((item) => (
+            {activeItems.map((item) => (
               <ItemRow
                 key={item.id}
                 item={item}
@@ -326,13 +339,51 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
                 onDelete={() => handleDeleteItem(item.id)}
                 onFlip={() => openBack(item.id)}
                 onEnter={handleAddItem}
+                onArchive={() => handleArchiveItem(item.id, true)}
               />
             ))}
           </div>
           <button type="button" className="item-add-btn" onClick={handleAddItem}>
             + Add line
           </button>
+
+          {archivedItems.length > 0 && (
+            <div className="archived-section">
+              <button className="archived-toggle" onClick={() => setShowArchivedItems((v) => !v)}>
+                {showArchivedItems ? "▾" : "▸"} Archived ({archivedItems.length})
+              </button>
+              {showArchivedItems && (
+                <div className="archived-list">
+                  {archivedItems.map((item) => (
+                    <div className="archived-row" key={item.id}>
+                      <span className="archived-row-text">{item.text || "Untitled line"}</span>
+                      <button
+                        type="button"
+                        className="archived-restore-btn"
+                        title="Unarchive line"
+                        onClick={() => handleArchiveItem(item.id, false)}
+                      >
+                        ↺
+                      </button>
+                      <button
+                        type="button"
+                        className="archived-delete-btn"
+                        title="Delete line permanently"
+                        onClick={() => handleDeleteItem(item.id)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="sticky-note-footer">
+            <button className="sticky-note-archive" onClick={() => onChangeNote({ archived: true })}>
+              Archive
+            </button>
             <button className="sticky-note-delete" onClick={() => onDelete(note.id)}>
               Delete card
             </button>

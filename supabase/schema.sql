@@ -28,6 +28,7 @@ create table if not exists notes (
   details text not null default '',
   items jsonb not null default '[]'::jsonb,
   title text not null default '',
+  archived boolean not null default false,
   color text not null default '#fef08a',
   position integer not null default 0,
   created_at timestamptz not null default now(),
@@ -39,6 +40,7 @@ create table if not exists notes (
 alter table notes add column if not exists details text not null default '';
 alter table notes add column if not exists items jsonb not null default '[]'::jsonb;
 alter table notes add column if not exists title text not null default '';
+alter table notes add column if not exists archived boolean not null default false;
 
 -- One-time backfill: a card is now a list of line items (each independently
 -- flippable with its own details), not one body + one shared details. Any

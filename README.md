@@ -32,6 +32,12 @@ Postgres storage.
   created before this model, and `schema.sql` has a one-time backfill that
   wraps that old content into a single item so nothing is lost. Safe to
   re-run against an existing database.
+- Both notes and individual line items carry `archived`. Archiving a card
+  (the "Archive" button next to "Delete card") or a line (the ⊡ button on
+  its row) hides it from the active view without deleting it; an
+  "Archived (N)" toggle appears — for cards, below "+ Add note"; for
+  lines, below "+ Add line" — to see and restore (↺) or permanently
+  delete (×) them later.
 - Both cards and decks can be resized by dragging the small ⤡ handle in
   their bottom-right corner, with a ↺ reset button appearing once a custom
   size is set (double-clicking the handle also resets). A card's width is

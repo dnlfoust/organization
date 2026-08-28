@@ -20,12 +20,15 @@ export default function DeckColumn({
   onDeleteDeck,
 }) {
   const { setNodeRef } = useDroppable({ id: deck.id });
-  const noteIds = notes.map((n) => n.id);
-  const sorted = notes.slice().sort((a, b) => a.position - b.position);
+  const activeNotes = notes.filter((n) => !n.archived);
+  const archivedNotes = notes.filter((n) => n.archived);
+  const noteIds = activeNotes.map((n) => n.id);
+  const sorted = activeNotes.slice().sort((a, b) => a.position - b.position);
   const topNote = sorted[0];
-  const shadowCount = Math.min(Math.max(notes.length - 1, 0), 2);
+  const shadowCount = Math.min(Math.max(activeNotes.length - 1, 0), 2);
 
   const [customSize, setCustomSize] = useState(null); // { width, height } in px, or null = default
+  const [showArchived, setShowArchived] = useState(false);
 
   function startResize(e) {
     e.preventDefault();
@@ -65,7 +68,7 @@ export default function DeckColumn({
         <h2 onClick={onToggleExpand}>
           <span className="deck-color-dot" style={{ background: deck.color }} />
           {deck.title}
-          <span className="deck-note-count">{notes.length}</span>
+          <span className="deck-note-count">{activeNotes.length}</span>
         </h2>
         <button className="deck-delete-btn" onClick={() => onDeleteDeck(deck.id)} title="Delete deck">
           ✕
@@ -90,6 +93,41 @@ export default function DeckColumn({
           <button className="deck-add-note" onClick={() => onAddNote(deck.id)}>
             + Add note
           </button>
+
+          {archivedNotes.length > 0 && (
+            <div className="archived-section">
+              <button className="archived-toggle" onClick={() => setShowArchived((v) => !v)}>
+                {showArchived ? "▾" : "▸"} Archived ({archivedNotes.length})
+              </button>
+              {showArchived && (
+                <div className="archived-list">
+                  {archivedNotes.map((note) => (
+                    <div className="archived-row" key={note.id}>
+                      <span className="archived-row-text">
+                        {previewText(note.title || note.items?.[0]?.text || "") || "Untitled note"}
+                      </span>
+                      <button
+                        type="button"
+                        className="archived-restore-btn"
+                        title="Unarchive card"
+                        onClick={() => onChangeNote(note.id, { archived: false })}
+                      >
+                        ↺
+                      </button>
+                      <button
+                        type="button"
+                        className="archived-delete-btn"
+                        title="Delete card permanently"
+                        onClick={() => onDeleteNote(note.id)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </>
       ) : (
         <div ref={setNodeRef} className="deck-stack" onClick={onToggleExpand}>
