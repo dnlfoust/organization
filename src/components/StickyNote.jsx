@@ -89,6 +89,25 @@ function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onF
     autoResize(textareaRef.current);
   }, [item.text]);
 
+  // Card/deck resizing changes this textarea's width, which changes how
+  // many lines the same text wraps to — re-measure height whenever the
+  // width actually changes (not just when the text does). Guarded to only
+  // react to width so our own height writes below don't retrigger this.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    let lastWidth = el.clientWidth;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0].contentRect.width;
+      if (width !== lastWidth) {
+        lastWidth = width;
+        autoResize(el);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (autoFocus && textareaRef.current) textareaRef.current.focus();
   }, [autoFocus]);
