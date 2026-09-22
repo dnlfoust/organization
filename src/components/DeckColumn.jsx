@@ -12,12 +12,16 @@ const MAX_DECK_HEIGHT = 1400;
 export default function DeckColumn({
   deck,
   notes,
+  itemsByNote,
   expanded,
   onToggleExpand,
   onAddNote,
   onChangeNote,
   onDeleteNote,
   onDeleteDeck,
+  onAddItem,
+  onChangeItem,
+  onDeleteItem,
 }) {
   const { setNodeRef } = useDroppable({ id: deck.id });
   const activeNotes = notes.filter((n) => !n.archived);
@@ -83,8 +87,12 @@ export default function DeckColumn({
                 <StickyNote
                   key={note.id}
                   note={note}
+                  items={itemsByNote[note.id] ?? []}
                   onChangeNote={(patch) => onChangeNote(note.id, patch)}
                   onDelete={onDeleteNote}
+                  onAddItem={() => onAddItem(note.id)}
+                  onChangeItem={onChangeItem}
+                  onDeleteItem={onDeleteItem}
                 />
               ))}
             </SortableContext>
@@ -104,7 +112,7 @@ export default function DeckColumn({
                   {archivedNotes.map((note) => (
                     <div className="archived-row" key={note.id}>
                       <span className="archived-row-text">
-                        {previewText(note.title || note.items?.[0]?.text || "") || "Untitled note"}
+                        {previewText(note.title || itemsByNote[note.id]?.[0]?.text || "") || "Untitled note"}
                       </span>
                       <button
                         type="button"
@@ -140,7 +148,7 @@ export default function DeckColumn({
           ))}
           <div className="deck-stack-top" style={{ "--note-color": deck.color }}>
             {topNote ? (
-              <p>{previewText(topNote.title || topNote.items?.[0]?.text || "") || "Untitled note"}</p>
+              <p>{previewText(topNote.title || itemsByNote[topNote.id]?.[0]?.text || "") || "Untitled note"}</p>
             ) : (
               <p className="deck-stack-empty">No notes yet — click to add one</p>
             )}

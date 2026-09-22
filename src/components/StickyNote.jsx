@@ -144,13 +144,21 @@ function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onF
   );
 }
 
-export default function StickyNote({ note, onChangeNote, onDelete }) {
+export default function StickyNote({
+  note,
+  items: itemsProp,
+  onChangeNote,
+  onDelete,
+  onAddItem,
+  onChangeItem,
+  onDeleteItem,
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: note.id,
   });
 
   const [title, setTitle] = useState(note.title ?? "");
-  const [items, setItems] = useState(note.items ?? []);
+  const [items, setItems] = useState(itemsProp ?? []);
   const [flippedItemId, setFlippedItemId] = useState(null);
   const [autoFocusId, setAutoFocusId] = useState(null);
   const [customSize, setCustomSize] = useState(null); // { width, height } in px, or null = default shape
@@ -206,29 +214,29 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
     flippedItemIdRef.current = flippedItemId;
   }, [flippedItemId]);
 
-  // Title and items save independently so an in-flight debounce on one
-  // field is never cancelled/overwritten by an edit to the other.
+  // Title and item text/details save independently, and each item's save
+  // is a separate API call now that items are their own rows — but edits
+  // still coalesce through one shared debounce per note so a burst of
+  // keystrokes across lines doesn't fire a request per keystroke.
+  const pendingItemPatches = useRef({});
   const itemsSaveTimer = useRef(null);
   const titleSaveTimer = useRef(null);
 
-  function commitItems(next, { immediate = false } = {}) {
-    setItems(next);
-    if (itemsSaveTimer.current) {
-      clearTimeout(itemsSaveTimer.current);
-      itemsSaveTimer.current = null;
-    }
-    if (immediate) {
-      onChangeNote({ items: next });
-    } else {
-      itemsSaveTimer.current = setTimeout(() => onChangeNote({ items: next }), SAVE_DEBOUNCE_MS);
-    }
+  function scheduleItemSave(itemId, patch) {
+    pendingItemPatches.current[itemId] = { ...(pendingItemPatches.current[itemId] || {}), ...patch };
+    if (itemsSaveTimer.current) clearTimeout(itemsSaveTimer.current);
+    itemsSaveTimer.current = setTimeout(flushItemSaves, SAVE_DEBOUNCE_MS);
   }
 
-  function flushItems() {
+  function flushItemSaves() {
     if (itemsSaveTimer.current) {
       clearTimeout(itemsSaveTimer.current);
       itemsSaveTimer.current = null;
-      onChangeNote({ items: itemsRef.current });
+    }
+    const pending = pendingItemPatches.current;
+    pendingItemPatches.current = {};
+    for (const [itemId, patch] of Object.entries(pending)) {
+      onChangeItem(itemId, patch);
     }
   }
 
@@ -247,38 +255,32 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
   }
 
   function handleChangeText(itemId, text) {
-    commitItems(itemsRef.current.map((it) => (it.id === itemId ? { ...it, text } : it)));
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, text } : it)));
+    scheduleItemSave(itemId, { text });
   }
 
   function handleToggleChecked(itemId, checked) {
-    commitItems(
-      itemsRef.current.map((it) => (it.id === itemId ? { ...it, checked } : it)),
-      { immediate: true }
-    );
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, checked } : it)));
+    onChangeItem(itemId, { checked });
   }
 
   function handleDeleteItem(itemId) {
-    commitItems(itemsRef.current.filter((it) => it.id !== itemId), { immediate: true });
+    setItems((prev) => prev.filter((it) => it.id !== itemId));
+    delete pendingItemPatches.current[itemId];
+    onDeleteItem(itemId);
   }
 
   function handleArchiveItem(itemId, archived) {
-    commitItems(
-      itemsRef.current.map((it) => (it.id === itemId ? { ...it, archived } : it)),
-      { immediate: true }
-    );
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, archived } : it)));
+    onChangeItem(itemId, { archived });
   }
 
-  function handleAddItem() {
-    const newItem = {
-      id: crypto.randomUUID(),
-      text: "",
-      details: "",
-      checked: false,
-      archived: false,
-      position: itemsRef.current.length,
-    };
-    commitItems([...itemsRef.current, newItem], { immediate: true });
-    setAutoFocusId(newItem.id);
+  async function handleAddItem() {
+    const newItem = await onAddItem();
+    if (newItem) {
+      setItems((prev) => [...prev, newItem]);
+      setAutoFocusId(newItem.id);
+    }
   }
 
   const backEditor = useEditor({
@@ -288,7 +290,8 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
       const itemId = flippedItemIdRef.current;
       if (!itemId) return;
       const html = editor.getHTML();
-      commitItems(itemsRef.current.map((it) => (it.id === itemId ? { ...it, details: html } : it)));
+      setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, details: html } : it)));
+      scheduleItemSave(itemId, { details: html });
     },
   });
 
@@ -299,14 +302,14 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
   }
 
   function closeBack() {
-    flushItems();
+    flushItemSaves();
     setFlippedItemId(null);
   }
 
   function archiveFlippedItem() {
     const itemId = flippedItemId;
     if (!itemId) return;
-    flushItems();
+    flushItemSaves();
     handleArchiveItem(itemId, true);
     setFlippedItemId(null);
   }
@@ -427,7 +430,7 @@ export default function StickyNote({ note, onChangeNote, onDelete }) {
             <div className="note-back-title">{flippedItem?.text || "Untitled line"}</div>
           </div>
           <NoteToolbar editor={backEditor} />
-          <EditorContent editor={backEditor} className="note-editor" onBlur={flushItems} />
+          <EditorContent editor={backEditor} className="note-editor" onBlur={flushItemSaves} />
           <div className="note-back-footer">
             <button type="button" className="note-back-archive" onClick={archiveFlippedItem}>
               Archive line

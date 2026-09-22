@@ -10,6 +10,7 @@ export default function App() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = signed out
   const [decks, setDecks] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [items, setItems] = useState([]);
   const [expandedDeckIds, setExpandedDeckIds] = useState(new Set());
 
   function toggleDeckExpanded(deckId) {
@@ -32,10 +33,13 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([dataClient.listDecks(), dataClient.listNotes()]).then(([d, n]) => {
-      setDecks(d);
-      setNotes(n);
-    });
+    Promise.all([dataClient.listDecks(), dataClient.listNotes(), dataClient.listItems()]).then(
+      ([d, n, i]) => {
+        setDecks(d);
+        setNotes(n);
+        setItems(i);
+      }
+    );
   }, [user]);
 
   const notesByDeck = useMemo(() => {
@@ -45,6 +49,14 @@ export default function App() {
     }
     return map;
   }, [decks, notes]);
+
+  const itemsByNote = useMemo(() => {
+    const map = {};
+    for (const note of notes) {
+      map[note.id] = items.filter((it) => it.noteId === note.id).sort((a, b) => a.position - b.position);
+    }
+    return map;
+  }, [notes, items]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -97,9 +109,10 @@ export default function App() {
     try {
       const position = (notesByDeck[deckId]?.length ?? 0);
       const deck = decks.find((d) => d.id === deckId);
-      const items = [{ id: crypto.randomUUID(), text: "", details: "", checked: false, position: 0 }];
-      const note = await dataClient.createNote({ deckId, color: deck.color, position, items });
+      const note = await dataClient.createNote({ deckId, color: deck.color, position });
+      const item = await dataClient.createItem({ noteId: note.id, position: 0 });
       setNotes((prev) => [...prev, note]);
+      setItems((prev) => [...prev, item]);
     } catch (err) {
       alert(`Couldn't create note: ${err.message}`);
     }
@@ -118,6 +131,7 @@ export default function App() {
     try {
       await dataClient.deleteNote(noteId);
       setNotes((prev) => prev.filter((n) => n.id !== noteId));
+      setItems((prev) => prev.filter((it) => it.noteId !== noteId));
     } catch (err) {
       alert(`Couldn't delete note: ${err.message}`);
     }
@@ -126,10 +140,11 @@ export default function App() {
   async function handleAddDeck({ title, color }) {
     try {
       const deck = await dataClient.createDeck({ title, color, position: decks.length });
-      const items = [{ id: crypto.randomUUID(), text: "", details: "", checked: false, position: 0 }];
-      const note = await dataClient.createNote({ deckId: deck.id, color, position: 0, items });
+      const note = await dataClient.createNote({ deckId: deck.id, color, position: 0 });
+      const item = await dataClient.createItem({ noteId: note.id, position: 0 });
       setDecks((prev) => [...prev, deck]);
       setNotes((prev) => [...prev, note]);
+      setItems((prev) => [...prev, item]);
       setExpandedDeckIds((prev) => new Set(prev).add(deck.id));
     } catch (err) {
       alert(`Couldn't create deck: ${err.message}`);
@@ -140,10 +155,41 @@ export default function App() {
     if (!confirm("Delete this deck and all its notes?")) return;
     try {
       await dataClient.deleteDeck(deckId);
+      const removedNoteIds = new Set(notes.filter((n) => n.deckId === deckId).map((n) => n.id));
       setDecks((prev) => prev.filter((d) => d.id !== deckId));
       setNotes((prev) => prev.filter((n) => n.deckId !== deckId));
+      setItems((prev) => prev.filter((it) => !removedNoteIds.has(it.noteId)));
     } catch (err) {
       alert(`Couldn't delete deck: ${err.message}`);
+    }
+  }
+
+  async function handleAddItem(noteId) {
+    try {
+      const position = itemsByNote[noteId]?.length ?? 0;
+      const item = await dataClient.createItem({ noteId, position });
+      setItems((prev) => [...prev, item]);
+      return item;
+    } catch (err) {
+      alert(`Couldn't add line: ${err.message}`);
+    }
+  }
+
+  async function handleChangeItem(itemId, patch) {
+    setItems((prev) => prev.map((it) => (it.id === itemId ? { ...it, ...patch } : it)));
+    try {
+      await dataClient.updateItem(itemId, patch);
+    } catch (err) {
+      alert(`Couldn't save line: ${err.message}`);
+    }
+  }
+
+  async function handleDeleteItem(itemId) {
+    setItems((prev) => prev.filter((it) => it.id !== itemId));
+    try {
+      await dataClient.deleteItem(itemId);
+    } catch (err) {
+      alert(`Couldn't delete line: ${err.message}`);
     }
   }
 
@@ -181,12 +227,16 @@ export default function App() {
               key={deck.id}
               deck={deck}
               notes={notesByDeck[deck.id] ?? []}
+              itemsByNote={itemsByNote}
               expanded={expandedDeckIds.has(deck.id)}
               onToggleExpand={() => toggleDeckExpanded(deck.id)}
               onAddNote={handleAddNote}
               onChangeNote={handleChangeNote}
               onDeleteNote={handleDeleteNote}
               onDeleteDeck={handleDeleteDeck}
+              onAddItem={handleAddItem}
+              onChangeItem={handleChangeItem}
+              onDeleteItem={handleDeleteItem}
             />
           ))}
           <AddDeckForm onAdd={handleAddDeck} />

@@ -17,29 +17,46 @@ Postgres storage.
 - `src/lib/dataClient.js` is the data-access layer both modes implement —
   everything else in the app (`App.jsx`, components) is written against that
   interface and doesn't know which backend it's talking to.
-- `supabase/schema.sql` creates the `decks` and `notes` tables with Row
-  Level Security so each authenticated user only ever sees their own rows.
+- `supabase/schema.sql` creates the `decks`, `notes`, and `items` tables
+  with Row Level Security so each authenticated user only ever sees their
+  own rows.
 - Each note ("card") has a `title` column shown at the top of the front,
-  above the line items, plus a list of **line items** in its `items` jsonb
-  column: `[{ id, text, details, checked, position }]`. The front of the
-  card is the title and that list — checkbox, plain text, a → arrow.
-  Clicking the arrow on a specific line flips the whole card over (CSS 3D
-  transform); the back shows that line's text as a read-only title plus
-  its own Tiptap editor (bold/italic/underline/strikethrough/lists/
-  checklists) for extended details, saved separately per line item, not
-  shared across the card.
-- Older `body`/`details` text columns still exist on `notes` for anything
-  created before this model, and `schema.sql` has a one-time backfill that
-  wraps that old content into a single item so nothing is lost. Safe to
-  re-run against an existing database.
-- Both notes and individual line items carry `archived`. Archiving a card
-  (the "Archive" button next to "Delete card") hides it from the active
-  view without deleting it; archiving a line is done from its flipped-over
-  back ("Archive line", next to the details editor) rather than from the
-  front row, to keep each row down to just the → and × buttons. An
-  "Archived (N)" toggle appears — for cards, below "+ Add note"; for
-  lines, below "+ Add line" — to see and restore (↺) or permanently
-  delete (×) them later.
+  above the line items, and its **line items** live in their own `items`
+  table (foreign-keyed to the note via `note_id`), not a jsonb column:
+  `{ id, noteId, text, details, checked, archived, archivedAt, position,
+  createdAt, updatedAt }`. The front of the card is the title and that
+  list — checkbox, plain text, a → arrow. Clicking the arrow on a specific
+  line flips the whole card over (CSS 3D transform); the back shows that
+  line's text as a read-only title plus its own Tiptap editor
+  (bold/italic/underline/strikethrough/lists/checklists) for extended
+  details, saved separately per line item, not shared across the card.
+- Items get their own table (rather than living in a jsonb array on
+  `notes`, as they originally did) specifically so `created_at` and
+  `archived_at` are real, queryable timestamps per line — the intent is to
+  eventually let an AI agent summarize "what got done between date X and
+  Y" with a plain `where archived_at between X and Y` over the `items`
+  table, instead of unpacking JSON. A Postgres trigger
+  (`set_archived_at()`) stamps `archived_at` the moment `archived` flips
+  to true on either `notes` or `items`, and clears it if flipped back, so
+  the timestamp is enforced server-side rather than trusted from the
+  client.
+- Older `body`/`details`/`items` (jsonb) columns still exist on `notes`
+  for anything created before this model — deprecated and unused by the
+  app, kept only so nothing already written is lost. `schema.sql` has a
+  one-time migration that backfills old body/details content into the
+  jsonb `items` column (if not already done) and then copies every note's
+  jsonb items into real rows in the `items` table, preserving the original
+  item id where possible. Both steps are guarded to be no-ops on
+  a re-run, so `schema.sql` stays safe to run again against an existing
+  database.
+- Both notes and individual line items carry `archived`/`archivedAt`.
+  Archiving a card (the "Archive" button next to "Delete card") hides it
+  from the active view without deleting it; archiving a line is done from
+  its flipped-over back ("Archive line", next to the details editor)
+  rather than from the front row, to keep each row down to just the → and
+  × buttons. An "Archived (N)" toggle appears — for cards, below "+ Add
+  note"; for lines, below "+ Add line" — to see and restore (↺) or
+  permanently delete (×) them later.
 - Both cards and decks can be resized by dragging the small ⤡ handle in
   their bottom-right corner, with a ↺ reset button appearing once a custom
   size is set (double-clicking the handle also resets). A card's width is
