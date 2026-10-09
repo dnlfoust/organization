@@ -17,6 +17,18 @@ import { initialDecks, initialNotes, initialItems } from "../demoData";
 
 const DEMO_KEY = "organization-demo-data";
 
+// Visiting with ?demo=1 forces demo mode even when Supabase is configured
+// (i.e. on the real deployed site), so there's a public, no-login page
+// anyone can poke at — see Login.jsx for the link in, and App.jsx for the
+// "Exit demo" link back out. Demo mode only ever touches localStorage, so
+// nothing a visitor does here can reach the real database.
+export const isForcedDemoMode =
+  typeof window !== "undefined" && new URLSearchParams(window.location.search).get("demo") === "1";
+
+export function resetDemoState() {
+  localStorage.removeItem(DEMO_KEY);
+}
+
 function loadDemoState() {
   let state;
   try {
@@ -319,4 +331,4 @@ const supabaseClient = {
   },
 };
 
-export const dataClient = isSupabaseConfigured ? supabaseClient : demoClient;
+export const dataClient = isSupabaseConfigured && !isForcedDemoMode ? supabaseClient : demoClient;

@@ -14,6 +14,13 @@ Postgres storage.
   from env vars. If they're not set, the app falls back to **demo mode**:
   local seed data persisted to `localStorage` instead of a real backend, so
   the UI is fully clickable without any setup.
+- On the real deployed site, visiting with `?demo=1` in the URL forces
+  demo mode even though Supabase *is* configured — this is the public,
+  no-login demo. The login screen links to it ("View the demo"), and the
+  demo's banner links back out ("Exit demo") or resets its seed data
+  ("Reset demo data"). Since demo mode only ever reads/writes
+  `localStorage`, nothing a demo visitor does can reach Supabase or be
+  seen by any other user — see `isForcedDemoMode` in `src/lib/dataClient.js`.
 - `src/lib/dataClient.js` is the data-access layer both modes implement —
   everything else in the app (`App.jsx`, components) is written against that
   interface and doesn't know which backend it's talking to.

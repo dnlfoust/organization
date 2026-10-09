@@ -46,6 +46,10 @@ export default function Login() {
           </button>
         </form>
         {error && <p className="login-error">{error}</p>}
+        <p className="login-demo-link">
+          Just want to look around? <a href="?demo=1">View the demo</a> — no account needed, and
+          nothing you do there is saved to the real app.
+        </p>
       </div>
     </div>
   );

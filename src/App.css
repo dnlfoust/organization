@@ -33,6 +33,21 @@
   border-radius: 999px;
 }
 
+.demo-banner-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: #78350f;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.demo-banner-link:hover {
+  color: #5a2a09;
+}
+
 .btn {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
@@ -117,6 +132,12 @@
   margin-top: 1rem;
   font-size: 0.85rem;
   color: #b42318;
+}
+
+.login-demo-link {
+  margin-top: 1.25rem;
+  margin-bottom: 0;
+  font-size: 0.8rem;
 }
 
 /* ---------- Board ---------- */

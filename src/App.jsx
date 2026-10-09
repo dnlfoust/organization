@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
-import { dataClient } from "./lib/dataClient";
+import { dataClient, isForcedDemoMode, resetDemoState } from "./lib/dataClient";
 import Login from "./components/Login";
 import DeckColumn from "./components/DeckColumn";
 import AddDeckForm from "./components/AddDeckForm";
@@ -209,7 +209,25 @@ export default function App() {
           <div className="subtitle">{user.email}</div>
         </div>
         <div className="header-actions">
-          {dataClient.mode === "demo" && (
+          {dataClient.mode === "demo" && isForcedDemoMode && (
+            <span className="demo-banner">
+              Demo mode — sample data lives only in your browser, nothing is saved to the real app.{" "}
+              <button
+                type="button"
+                className="demo-banner-link"
+                onClick={() => {
+                  resetDemoState();
+                  window.location.reload();
+                }}
+              >
+                Reset demo data
+              </button>{" "}
+              <a className="demo-banner-link" href="?">
+                Exit demo
+              </a>
+            </span>
+          )}
+          {dataClient.mode === "demo" && !isForcedDemoMode && (
             <span className="demo-banner">Demo mode — connect Supabase to save real data</span>
           )}
           {dataClient.mode === "supabase" && (
