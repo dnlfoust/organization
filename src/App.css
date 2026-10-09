@@ -152,7 +152,7 @@
 }
 
 .deck-column {
-  flex: 0 0 260px;
+  flex: 0 0 390px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
