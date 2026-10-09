@@ -235,6 +235,7 @@ export default function App() {
               Sign out
             </button>
           )}
+          <AddDeckForm onAdd={handleAddDeck} />
         </div>
       </header>
 
@@ -257,7 +258,6 @@ export default function App() {
               onDeleteItem={handleDeleteItem}
             />
           ))}
-          <AddDeckForm onAdd={handleAddDeck} />
         </div>
       </DndContext>
     </div>

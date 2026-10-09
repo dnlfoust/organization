@@ -144,10 +144,10 @@
 
 .board {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 1.25rem;
   padding: 1.5rem;
-  overflow-x: auto;
   min-height: calc(100vh - 65px);
 }
 
@@ -332,14 +332,25 @@
   filter: brightness(0.97);
 }
 
-.add-deck-column {
-  flex: 0 0 220px;
+.add-deck-menu {
+  position: relative;
+}
+
+.add-deck-trigger.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .add-deck-form {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 20;
+  width: 220px;
   background: var(--color-surface);
-  border: 1px dashed var(--color-border);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
   padding: 0.85rem;
 }
 
@@ -372,21 +383,6 @@
   border-color: var(--color-text);
 }
 
-.add-deck-trigger {
-  width: 100%;
-  border: 1px dashed var(--color-border);
-  background: none;
-  border-radius: var(--radius);
-  padding: 0.85rem;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.add-deck-trigger:hover {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
-}
 
 /* ---------- Sticky notes ---------- */
 
