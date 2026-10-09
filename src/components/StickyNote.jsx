@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useSortable } from "@dnd-kit/sortable";
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -83,6 +84,9 @@ function autoResize(el) {
 }
 
 function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onFlip, onEnter }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+  });
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -112,8 +116,16 @@ function ItemRow({ item, autoFocus, onChangeText, onToggleChecked, onDelete, onF
     if (autoFocus && textareaRef.current) textareaRef.current.focus();
   }, [autoFocus]);
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <div className="item-row">
+    <div ref={setNodeRef} style={style} className={`item-row${isDragging ? " dragging" : ""}`}>
+      <div className="item-drag-handle" {...attributes} {...listeners} aria-label="Reorder line">
+        ⠿
+      </div>
       <input
         type="checkbox"
         className="item-checkbox"
@@ -283,6 +295,21 @@ export default function StickyNote({
     }
   }
 
+  const itemDragSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function handleItemDragEnd(event) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const current = itemsRef.current.filter((it) => !it.archived).sort((a, b) => a.position - b.position);
+    const oldIndex = current.findIndex((it) => it.id === active.id);
+    const newIndex = current.findIndex((it) => it.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(current, oldIndex, newIndex).map((it, idx) => ({ ...it, position: idx }));
+    const reorderedIds = new Set(reordered.map((it) => it.id));
+    setItems((prev) => [...prev.filter((it) => !reorderedIds.has(it.id)), ...reordered]);
+    reordered.forEach((it) => onChangeItem(it.id, { position: it.position }));
+  }
+
   const backEditor = useEditor({
     extensions: DETAILS_EXTENSIONS,
     content: "",
@@ -355,20 +382,31 @@ export default function StickyNote({
             onChange={(e) => commitTitle(e.target.value)}
             onBlur={flushTitle}
           />
-          <div className="item-list">
-            {activeItems.map((item) => (
-              <ItemRow
-                key={item.id}
-                item={item}
-                autoFocus={item.id === autoFocusId}
-                onChangeText={(text) => handleChangeText(item.id, text)}
-                onToggleChecked={(checked) => handleToggleChecked(item.id, checked)}
-                onDelete={() => handleDeleteItem(item.id)}
-                onFlip={() => openBack(item.id)}
-                onEnter={handleAddItem}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={itemDragSensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleItemDragEnd}
+          >
+            <SortableContext
+              items={activeItems.map((item) => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="item-list">
+                {activeItems.map((item) => (
+                  <ItemRow
+                    key={item.id}
+                    item={item}
+                    autoFocus={item.id === autoFocusId}
+                    onChangeText={(text) => handleChangeText(item.id, text)}
+                    onToggleChecked={(checked) => handleToggleChecked(item.id, checked)}
+                    onDelete={() => handleDeleteItem(item.id)}
+                    onFlip={() => openBack(item.id)}
+                    onEnter={handleAddItem}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
           <button type="button" className="item-add-btn" onClick={handleAddItem}>
             + Add line
           </button>
